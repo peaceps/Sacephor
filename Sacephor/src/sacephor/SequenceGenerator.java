@@ -435,12 +435,9 @@ public class SequenceGenerator
         Document doc = null;
         try
         {
-            // Create the new DocumentBuilderFactory
             DocumentBuilderFactory docBF = DocumentBuilderFactory.newInstance();
-            // Create the new DocumentBuilder
             DocumentBuilder docBuilder = docBF.newDocumentBuilder();
             doc = docBuilder.parse( source );
-            // Normalize text representation
             doc.getDocumentElement().normalize();
             return doc.getDocumentElement();
         }
