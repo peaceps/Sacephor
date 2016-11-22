@@ -40,9 +40,9 @@ public class SequenceGenerator
 
     private static final String[] FILTERS = new String[]{ "" };
 
-    private static final String FOLDER = "D:/";//
+    private static final String FOLDER = "D:/userdata/xinfu/Desktop/";//
 
-    private static final String LOG_FILE = "SiteManager.log";//
+    private static final String LOG_FILE = "a.log";//
 
     private static final String SEQUENCE_FILE = "Act_Log_Debug";//
 
