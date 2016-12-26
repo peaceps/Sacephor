@@ -1,10 +1,10 @@
 package sacephor;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +19,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /*
  *  Copyright (c) 2008 Nokia Siemens Networks. All rights reserved.
@@ -201,6 +202,10 @@ public class SequenceGenerator
             }
             writeFooter( sequenceWriter );
         }
+        catch( Exception e )
+        {
+            System.out.println( e );
+        }
         finally
         {
             if( sequenceWriter != null )
@@ -333,25 +338,23 @@ public class SequenceGenerator
         return map.get( identifyId );
     }
 
-    private static Element parseElementFromString( String fileName )
+    private static Element parseElementFromString( String node )
     {
-        Document doc = null;
-        FileInputStream is = null;
         try
         {
-            is = new FileInputStream( fileName );
+            InputSource source = new InputSource( new StringReader( node ) );
             // Create the new DocumentBuilderFactory
             DocumentBuilderFactory docBF = DocumentBuilderFactory.newInstance();
             // Create the new DocumentBuilder
             DocumentBuilder docBuilder = docBF.newDocumentBuilder();
-            doc = docBuilder.parse( is );
+            Document doc  = docBuilder.parse( source );
             // Normalize text representation
             doc.getDocumentElement().normalize();
             return doc.getDocumentElement();
         }
-        catch( Exception ex )
+        catch( Exception e )
         {
-            System.err.println( ex );
+            System.err.println( e );
         }
         return null;
     }
