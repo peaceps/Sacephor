@@ -1,0 +1,4 @@
+grant codeBase "file:/D:/git/Sacephor/bin/-"
+{
+	permission security.SaPermission "sa.*", "go";
+};
