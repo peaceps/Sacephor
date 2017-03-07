@@ -1,4 +1,6 @@
 grant codeBase "file:/D:/git/Sacephor/bin/-"
 {
 	permission security.SaPermission "sa.*", "go";
+	permission java.lang.RuntimePermission "createClassLoader";
+	permission java.lang.RuntimePermission "closeClassLoader";
 };
