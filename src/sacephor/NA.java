@@ -37,7 +37,7 @@ public class NA
         //t4-stable-270.txt
         List<Worm> worms = getWormsFromHSErr( "hs_err_pid10760.log" );
 
-        // System.out.println( groupCount( worms, worm -> worm.getSbTrace() ) );
+        System.out.println( groupCount( worms, worm -> worm.getSbTrace() ) );
         printWormsBasic( worms );
 //        printWorms( getWormsFromHSErr( "hs_err_pid10760.log" ) );
     }
