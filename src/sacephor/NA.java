@@ -37,7 +37,7 @@ public class NA
         //t3-460.txt
         //t4-stable-270.txt
         //hs_err_pid10760.log
-        List<Worm> worms = getWormsFromJStack( desktop + "tt.txt" );
+        List<Worm> worms = getWormsFromJStack( desktop + "ttt.txt" );
         printNameState( worms );
         printLock( worms );
     }
@@ -64,7 +64,8 @@ public class NA
         List<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toList() );
         conditions.retainAll( locks );
         System.out.println( conditions );
-        System.out.println( groupCount( worms, worm -> worm.getSbTrace().length() > 0, worm -> worm.getSbTrace() ) );
+        System.out.println();
+        printMap( groupCount( worms, worm -> worm.getNKTrace().length() > 0, worm -> worm.getNKTrace() ) );
     }
 
     private static boolean needPrint( Map.Entry<String, Long> entry )
@@ -145,9 +146,12 @@ public class NA
                 worm.addLock( lock.substring( 0, lock.indexOf( '>' ) ) );
                 continue;
             }
-            if( line.startsWith( "at com.nokia.sb" ) )
+            if( line.startsWith( "at com.nokia" ) )
             {
-                worm.setSbTrace( worm.getSbTrace() == null ? "" : ( worm.getSbTrace() + "\n" ) + line.trim() );
+                if( worm.getState().contains( "WAITING" ) || worm.getState().contains( "BLOCK" ) )
+                {
+                    worm.setNKTrace( ( worm.getNKTrace() == null ? "" : worm.getNKTrace() ) + line + "\n" );
+                }
             }
         }
         reader.close();
@@ -198,7 +202,7 @@ class Worm
 
     private String condition;
 
-    private String sbTrace;
+    private String nkTrace;
 
     public Worm( String name )
     {
@@ -267,18 +271,18 @@ class Worm
         this.condition = condition;
     }
 
-    public String getSbTrace()
+    public String getNKTrace()
     {
-        return sbTrace;
+        return nkTrace;
     }
 
-    public void setSbTrace( String sbTrace )
+    public void setNKTrace( String nkTrace )
     {
-        this.sbTrace = sbTrace;
+        this.nkTrace = nkTrace;
     }
 
     public String toString()
     {
-        return name + "->" + state + "->" + condition + "->" + locks + "->" + sbTrace;
+        return name + "->" + state + "->" + condition + "->" + locks + "->" + nkTrace;
     }
 }
