@@ -28,21 +28,21 @@ import java.util.stream.Collectors;
  */
 public class NA
 {
-
     public static void main( String[] args ) throws Exception
     {
+        String desktop = "D:/userdata/xinfu/Desktop/";
+
         //t1-220.txt
         //t2-370.txt
         //t3-460.txt
         //t4-stable-270.txt
-        List<Worm> worms = getWormsFromHSErr( "hs_err_pid10760.log" );
-
-        System.out.println( groupCount( worms, worm -> worm.getSbTrace() ) );
-        printWormsBasic( worms );
-//        printWorms( getWormsFromHSErr( "hs_err_pid10760.log" ) );
+        //hs_err_pid10760.log
+        List<Worm> worms = getWormsFromJStack( desktop + "tt.txt" );
+        printNameState( worms );
+        printLock( worms );
     }
 
-    private static void printWormsBasic( List<Worm> worms )
+    private static void printNameState( List<Worm> worms )
     {
         printMap( groupCount( worms, worm -> worm.getNameGroup() ), NA::needPrint );
         printMap( groupCount( worms, worm -> worm.getState() ) );
@@ -56,6 +56,15 @@ public class NA
             System.out.println( entry.getKey() + ":" );
             printMap( entry.getValue(), NA::needPrint );
         } );
+    }
+
+    private static void printLock( List<Worm> worms )
+    {
+        List<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toList() );
+        List<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toList() );
+        conditions.retainAll( locks );
+        System.out.println( conditions );
+        System.out.println( groupCount( worms, worm -> worm.getSbTrace().length() > 0, worm -> worm.getSbTrace() ) );
     }
 
     private static boolean needPrint( Map.Entry<String, Long> entry )
@@ -89,7 +98,7 @@ public class NA
     private static LinkedList<Worm> getWormsFromJStack( String file ) throws Exception
     {
         LinkedList<Worm> worms = new LinkedList<>();
-        BufferedReader reader = new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/" + file ) );
+        BufferedReader reader = new BufferedReader( new FileReader( file ) );
         String line = null;
         while( ( line = reader.readLine() ) != null )
         {
@@ -138,7 +147,7 @@ public class NA
             }
             if( line.startsWith( "at com.nokia.sb" ) )
             {
-                worm.setSbTrace( worm.getSbTrace() + "\n" + line.trim() );
+                worm.setSbTrace( worm.getSbTrace() == null ? "" : ( worm.getSbTrace() + "\n" ) + line.trim() );
             }
         }
         reader.close();
@@ -150,7 +159,7 @@ public class NA
         List<Worm> worms = new ArrayList();
         String pattern =
             "^.{2}0x[0-9A-Za-z]{8} JavaThread \"(.*?)\" \\[(_.*?), id=.*?, stack\\(0x[0-9A-Za-z]{8},0x[0-9A-Za-z]{8}\\)\\]$";
-        BufferedReader reader = new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/" + file ) );
+        BufferedReader reader = new BufferedReader( new FileReader( file ) );
         String line = null;
         boolean start = false;
         while( ( line = reader.readLine() ) != null )
@@ -194,7 +203,6 @@ class Worm
     public Worm( String name )
     {
         this.name = name;
-        sbTrace = "";
     }
 
     public String getName()
@@ -205,7 +213,11 @@ class Worm
     public String getNameGroup()
     {
         String nameGroup = name;
-        if( nameGroup.indexOf( '-' ) != -1 )
+        if( nameGroup.startsWith( "pool" ) )
+        {
+            nameGroup = nameGroup.substring( 0, nameGroup.lastIndexOf( '-' ) );
+        }
+        else if( nameGroup.indexOf( '-' ) != -1 )
         {
             nameGroup = nameGroup.substring( 0, nameGroup.indexOf( '-' ) );
         }
