@@ -35,10 +35,10 @@ public class NA
         //t2-370.txt
         //t3-460.txt
         //t4-stable-270.txt
-        List<Worm> worms = getWormsFromJStack( "t3-460.txt" );
+        List<Worm> worms = getWormsFromHSErr( "hs_err_pid10760.log" );
 
-        System.out.println( groupCount( worms, worm -> worm.getSbTrace() ) );
-        //printWormsBasic( worms );
+        // System.out.println( groupCount( worms, worm -> worm.getSbTrace() ) );
+        printWormsBasic( worms );
 //        printWorms( getWormsFromHSErr( "hs_err_pid10760.log" ) );
     }
 
@@ -52,12 +52,9 @@ public class NA
                 Collectors.toMap( state -> state,
                     state -> groupCount( worms, worm -> state.equals( worm.getState() ),
                         worm -> worm.getNameGroup() ) ) );
-
-        System.out.println();
         m.entrySet().forEach( entry -> {
             System.out.println( entry.getKey() + ":" );
             printMap( entry.getValue(), NA::needPrint );
-            System.out.println();
         } );
     }
 
@@ -75,6 +72,7 @@ public class NA
     {
         map.entrySet().stream().filter( filter ).forEach(
             entry -> System.out.println( entry.getKey() + "->" + entry.getValue() ) );
+        System.out.println();
     }
 
     private static <T, S> Map<T, Long> groupCount( List<S> src, Function<S, T> keyMapper )
