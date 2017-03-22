@@ -37,9 +37,8 @@ public class NA
         //t3-460.txt
         //t4-stable-270.txt
         //hs_err_pid10760.log
-        List<Worm> worms = getWormsFromJStack( desktop + "ttt.txt" );
+        List<Worm> worms = getWormsFromHSErr( desktop + "hs_err_pid10760.log" );
         printNameState( worms );
-        printLock( worms );
     }
 
     private static void printNameState( List<Worm> worms )
@@ -130,7 +129,7 @@ public class NA
             {
                 String lc = line.substring( line.indexOf( '<' ) + 1 );
                 lc = lc.substring( 0, lc.indexOf( '>' ) );
-                if( worm.getState().contains( "WAITING" ) )
+                if( wait( worm ) )
                 {
                     worm.setCondition( lc );
                 }
@@ -148,7 +147,7 @@ public class NA
             }
             if( line.startsWith( "at com.nokia" ) )
             {
-                if( worm.getState().contains( "WAITING" ) || worm.getState().contains( "BLOCK" ) )
+                if( wait( worm ) )
                 {
                     worm.setNKTrace( ( worm.getNKTrace() == null ? "" : worm.getNKTrace() ) + line + "\n" );
                 }
@@ -156,6 +155,11 @@ public class NA
         }
         reader.close();
         return worms;
+    }
+
+    private static boolean wait( Worm worm )
+    {
+        return worm.getState().contains( "WAITING" );
     }
 
     private static List<Worm> getWormsFromHSErr( String file ) throws Exception
