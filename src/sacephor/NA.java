@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -31,14 +32,10 @@ public class NA
     public static void main( String[] args ) throws Exception
     {
         String desktop = "D:/userdata/xinfu/Desktop/";
-
-        //t1-220.txt
-        //t2-370.txt
-        //t3-460.txt
-        //t4-stable-270.txt
-        //hs_err_pid10760.log
-        List<Worm> worms = getWormsFromHSErr( desktop + "hs_err_pid10760.log" );
+        //hs_err_pid10760.log output_lte_sb_jstack.log
+        List<Worm> worms = getWormsFromJStack( desktop + "ss.txt" );
         printNameState( worms );
+        //  printLock( worms );
     }
 
     private static void printNameState( List<Worm> worms )
@@ -59,8 +56,8 @@ public class NA
 
     private static void printLock( List<Worm> worms )
     {
-        List<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toList() );
-        List<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toList() );
+        Set<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toSet() );
+        Set<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toSet() );
         conditions.retainAll( locks );
         System.out.println( conditions );
         System.out.println();
@@ -119,7 +116,7 @@ public class NA
                 worm.setState( line.replace( "java.lang.Thread.State: ", "" ).replaceAll( "\\(.*?\\)", "" ).trim() );
                 continue;
             }
-            if( line.startsWith( "- parking to wait for" ) )
+            if( line.startsWith( "- parking to wait for" ) || line.startsWith( "- waiting to lock" ) )
             {
                 String condition = line.substring( line.indexOf( '<' ) + 1 );
                 worm.setCondition( condition.substring( 0, condition.indexOf( '>' ) ) );
