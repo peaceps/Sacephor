@@ -11,6 +11,7 @@ package sacephor;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +29,8 @@ import java.util.stream.Collectors;
  */
 public class NA
 {
+    private static PrintWriter printer = new PrintWriter( System.out );
+
     public static void main( String[] args ) throws Exception
     {
         String folder = "D:/userdata/xinfu/Desktop/New folder/";
@@ -35,6 +38,7 @@ public class NA
         List<Worm> worms = getWormsFromJStack( folder + "output_lte_sb_jstack_16.39.log" );
         printNameState( worms );
         printLock( worms );
+        printer.close();
     }
 
     private static void printNameState( List<Worm> worms )
@@ -48,7 +52,7 @@ public class NA
                     state -> groupCount( worms, worm -> state.equals( worm.getState() ),
                         worm -> worm.getNameGroup() ) ) );
         m.entrySet().forEach( entry -> {
-            System.out.println( entry.getKey() + ":" );
+            printer.println( entry.getKey() + ":" );
             printMap( entry.getValue(), NA::needPrint );
         } );
     }
@@ -58,9 +62,7 @@ public class NA
         List<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toList() );
         List<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toList() );
         conditions.retainAll( locks );
-        System.out.println( groupCount( conditions ) );
-        System.out.println();
-        printMap( groupCount( worms, worm -> worm.getNKTrace().length() > 0, worm -> worm.getNKTrace() ) );
+        printMap( groupCount( conditions ) );
     }
 
     private static boolean needPrint( Map.Entry<String, Long> entry )
@@ -76,8 +78,8 @@ public class NA
     private static <K, V> void printMap( Map<K, V> map, Predicate<Map.Entry<K, V>> filter )
     {
         map.entrySet().stream().filter( filter ).forEach(
-            entry -> System.out.println( entry.getKey() + "->" + entry.getValue() ) );
-        System.out.println();
+            entry -> printer.println( entry.getKey() + "->" + entry.getValue() ) );
+        printer.println();
     }
 
     private static <T> Map<T, Long> groupCount( List<T> src )
@@ -144,14 +146,6 @@ public class NA
             {
                 String lock = line.substring( line.indexOf( '<' ) + 1 );
                 worm.addLock( lock.substring( 0, lock.indexOf( '>' ) ) );
-                continue;
-            }
-            if( line.startsWith( "at com.nokia" ) )
-            {
-                if( wait( worm ) )
-                {
-                    worm.setNKTrace( ( worm.getNKTrace() == null ? "" : worm.getNKTrace() ) + line + "\n" );
-                }
             }
         }
         reader.close();
@@ -206,8 +200,6 @@ class Worm
     private List<String> locks = new ArrayList<>();
 
     private String condition;
-
-    private String nkTrace;
 
     public Worm( String name )
     {
@@ -276,18 +268,8 @@ class Worm
         this.condition = condition;
     }
 
-    public String getNKTrace()
-    {
-        return nkTrace;
-    }
-
-    public void setNKTrace( String nkTrace )
-    {
-        this.nkTrace = nkTrace;
-    }
-
     public String toString()
     {
-        return name + "->" + state + "->" + condition + "->" + locks + "->" + nkTrace;
+        return name + "->" + state + "->" + condition + "->" + locks;
     }
 }
