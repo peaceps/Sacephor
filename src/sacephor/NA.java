@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -31,11 +30,11 @@ public class NA
 {
     public static void main( String[] args ) throws Exception
     {
-        String desktop = "D:/userdata/xinfu/Desktop/";
+        String folder = "D:/userdata/xinfu/Desktop/New folder/";
         //hs_err_pid10760.log output_lte_sb_jstack.log
-        List<Worm> worms = getWormsFromJStack( desktop + "ss.txt" );
+        List<Worm> worms = getWormsFromJStack( folder + "output_lte_sb_jstack_16.39.log" );
         printNameState( worms );
-        //  printLock( worms );
+        printLock( worms );
     }
 
     private static void printNameState( List<Worm> worms )
@@ -56,10 +55,10 @@ public class NA
 
     private static void printLock( List<Worm> worms )
     {
-        Set<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toSet() );
-        Set<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toSet() );
+        List<String> conditions = worms.stream().map( worm -> worm.getCondition() ).collect( Collectors.toList() );
+        List<String> locks = worms.stream().flatMap( worm -> worm.getLocks().stream() ).collect( Collectors.toList() );
         conditions.retainAll( locks );
-        System.out.println( conditions );
+        System.out.println( groupCount( conditions ) );
         System.out.println();
         printMap( groupCount( worms, worm -> worm.getNKTrace().length() > 0, worm -> worm.getNKTrace() ) );
     }
@@ -79,6 +78,11 @@ public class NA
         map.entrySet().stream().filter( filter ).forEach(
             entry -> System.out.println( entry.getKey() + "->" + entry.getValue() ) );
         System.out.println();
+    }
+
+    private static <T> Map<T, Long> groupCount( List<T> src )
+    {
+        return groupCount( src, t -> true, t -> t );
     }
 
     private static <T, S> Map<T, Long> groupCount( List<S> src, Function<S, T> keyMapper )
