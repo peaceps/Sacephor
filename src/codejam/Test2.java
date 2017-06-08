@@ -28,6 +28,7 @@ public class Test2
         {
             process( line, failed, childs, depth, taskSrc, srcPackages, resultBuffer );
         }
+
         resultBuffer.entrySet().forEach(
             entry -> processResult( failed, taskSrc, srcPackages, resultBuffer, entry.getKey(), entry.getValue(), true,
                 true ) );
