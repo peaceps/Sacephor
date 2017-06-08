@@ -10,11 +10,11 @@ public class Test4
 	public static void main(String[] args)
 	{
 		int districtCount = 5;
-		int[][] distances = {{0,100,100,100,100},{100,0,5,1,17},{100,5,0,7,9},{100,1,7,0,20},{100,17,9,20,0}};
-		int[][] routes = {{1,4,0,0,0}};
+		int[][] distances = {{0,100,100,100,100},{100,0,2,80,3},{100,2,0,80,4},{100,80,80,0,80},{100,3,4,80,0}};
+		int[][] routes = {{1,4,0,0,0},null,null,null,null};
 		int[][] ranks = getDistanceRanks(distances);
 		
-//		Stream.of(ranks).forEach(r -> System.out.println(Arrays.toString(r)));
+	Stream.of(ranks).forEach(r -> System.out.println(Arrays.toString(r)));
 		
 		for(int i =districtCount ; i >=1  ; i--){
 			if(getRoute(routes, i) ==null ){
@@ -22,19 +22,17 @@ public class Test4
 				if(!linkNearest(routes, ranks, distances, newRoute, i)){
 					addRoute(routes, newRoute);
 				}
-				
-				
 			}
 		}
 		Stream.of(routes).forEach(r -> System.out.println(Arrays.toString(r)));
 		
-	//	linkRoutes();
+		linkRoutes(routes,ranks,distances);
 		
 		System.out.println(build);
 		
 	}
 		
-	private static void linkRoutes(int[][] ranks,int[][] distances, int[] newRoute){
+	private static void linkRoutes(int[][] routes, int[][] ranks,int[][] distances){
 		
 	}
 	
@@ -45,15 +43,19 @@ public class Test4
 		
 		while( nearestRoute==null && !contains(newRoute, i)){
 			addToRoute(newRoute, i);
+			
 			nearest = ranks[i-1][0]+1;
+			if(!contains(newRoute, nearest)){
+			build+=distances[i-1][ranks[i-1][0]];}
+			
 			nearestRoute = getRoute(routes, nearest);
-			build+=distances[i-1][ranks[i-1][0]];
 			i = nearest;
 		}
 		
 		if(nearestRoute!=null){
 			for(int d:newRoute){
-				addToRoute(nearestRoute, d);
+				if(d!=0){
+				addToRoute(nearestRoute, d);}
 			}
 		}
 		
@@ -62,7 +64,7 @@ public class Test4
 	
 	private static int[] getRoute(int[][] arr, int val){
 		for(int[] v:arr){
-			if(contains(v, val)){
+			if(v!=null&&contains(v, val)){
 				return v;
 			}
 		}
@@ -94,17 +96,7 @@ public class Test4
 				break;
 			}
 		}
-	}
-	
-	private static void removeFromRoute(int[] route, int district){
-		for(int i =0 ; i < route.length ;  i++){
-			if(route[i] == district){
-				route[i] = 0;
-				break;
-			}
-		}
-	}
-	
+	}	
 	
 	private static int[][] getDistanceRanks(int[][] distances){
 		int length = distances.length;
