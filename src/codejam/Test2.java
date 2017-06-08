@@ -22,19 +22,19 @@ public class Test2
         Map<String, Boolean> resultBuffer = new HashMap<>();
 
         BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/StatOfDistTask.large.1496898329315.input" ) );
+            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/StatOfDistTask.small.1496815744663.input" ) );
         String line = null;
         while( ( line = reader.readLine() ) != null )
         {
             process( line, failed, childs, depth, taskSrc, srcPackages, resultBuffer );
         }
+        reader.close();
 
         resultBuffer.entrySet().forEach(
             entry -> processResult( failed, taskSrc, srcPackages, resultBuffer, entry.getKey(), entry.getValue(), true,
                 true ) );
         taskSrc.keySet().forEach(
             timeout -> processResult( failed, taskSrc, srcPackages, resultBuffer, timeout, false, true, false ) );
-        reader.close();
 
         failed.entrySet().stream().sorted( ( x, y ) -> depth.get( x.getKey() ) - depth.get( y.getKey() ) ).forEach(
             entry -> {
