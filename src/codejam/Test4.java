@@ -1,33 +1,74 @@
 package codejam;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public class Test4
 {
+	
+	private static int build = 0;
 	public static void main(String[] args)
 	{
 		int districtCount = 5;
 		int[][] distances = {{0,100,100,100,100},{100,0,5,1,17},{100,5,0,7,9},{100,1,7,0,20},{100,17,9,20,0}};
-		int[] route = {1,4,0,0,0};
+		int[][] routes = {{1,4,0,0,0}};
 		int[][] ranks = getDistanceRanks(distances);
 		
 		Stream.of(ranks).forEach(r -> System.out.println(Arrays.toString(r)));
 		
-		int newlyBuilt=0;
 		for(int i =1 ; i <= districtCount ; i++){
-			if(!contains(route, i)  ){
-				if( contains(route,ranks[i-1][0]+1)){
-				addRoute(route, i);
-				newlyBuilt+=distances[i-1][ranks[i-1][0]];
-			}
+			if(getRoute(routes, i) ==null ){
+				int[] newRoute =new int[districtCount];
+				if(!linkNearest(routes, ranks, distances, newRoute, i)){
+					linkRoute(ranks, distances, newRoute);
+					addRoute(routes, newRoute);
+				}
+				
+				
 			}
 		}
 		
-		System.out.println(newlyBuilt);
+		linkRoutes();
 		
+		System.out.println(build);
+		
+	}
+	
+	private static void linkRoute(int[][] ranks,int[][] distances, int[] newRoute){
+		
+	}
+	
+	private static void linkRoutes(int[][] ranks,int[][] distances, int[] newRoute){
+		
+	}
+	
+	private static boolean linkNearest(int[][] routes, int[][] ranks,int[][] distances, int[] newRoute, int i){
+		int nearest = ranks[i-1][0]+1;
+		int[] nearestRoute = getRoute(routes, nearest);
+		if( nearestRoute==null){
+			addToRoute(newRoute, i);
+			if(contains(newRoute, nearest)){
+				return false;
+			}
+			boolean finded = linkNearest(routes,ranks,distances,newRoute,nearest);
+			if(!finded){
+				return false;
+			}
+		}
+
+		removeFromRoute(newRoute, i);
+		addToRoute(nearestRoute, i);
+		build+=distances[i-1][ranks[i-1][0]];
+		return true;
+	}
+	
+	private static int[] getRoute(int[][] arr, int val){
+		for(int[] v:arr){
+			if(contains(v, val)){
+				return v;
+			}
+		}
+		return null;
 	}
 	
 	private static boolean contains(int[] arr, int val){
@@ -39,10 +80,28 @@ public class Test4
 		return false;
 	}
 	
-	private static void addRoute(int[] route, int district){
+	private static void addRoute(int[][] routes, int[] route){
+		for(int i =0 ; i < routes.length ;  i++){
+			if(routes[i] == null){
+				routes[i] = route;
+				break;
+			}
+		}
+	}
+	
+	private static void addToRoute(int[] route, int district){
 		for(int i =0 ; i < route.length ;  i++){
 			if(route[i] == 0){
 				route[i] = district;
+				break;
+			}
+		}
+	}
+	
+	private static void removeFromRoute(int[] route, int district){
+		for(int i =0 ; i < route.length ;  i++){
+			if(route[i] == district){
+				route[i] = 0;
 				break;
 			}
 		}
