@@ -14,52 +14,50 @@ public class Test4
 		int[][] routes = {{1,4,0,0,0}};
 		int[][] ranks = getDistanceRanks(distances);
 		
-		Stream.of(ranks).forEach(r -> System.out.println(Arrays.toString(r)));
+//		Stream.of(ranks).forEach(r -> System.out.println(Arrays.toString(r)));
 		
-		for(int i =1 ; i <= districtCount ; i++){
+		for(int i =districtCount ; i >=1  ; i--){
 			if(getRoute(routes, i) ==null ){
 				int[] newRoute =new int[districtCount];
 				if(!linkNearest(routes, ranks, distances, newRoute, i)){
-					linkRoute(ranks, distances, newRoute);
 					addRoute(routes, newRoute);
 				}
 				
 				
 			}
 		}
+		Stream.of(routes).forEach(r -> System.out.println(Arrays.toString(r)));
 		
-		linkRoutes();
+	//	linkRoutes();
 		
 		System.out.println(build);
 		
 	}
-	
-	private static void linkRoute(int[][] ranks,int[][] distances, int[] newRoute){
 		
-	}
-	
 	private static void linkRoutes(int[][] ranks,int[][] distances, int[] newRoute){
 		
 	}
 	
 	private static boolean linkNearest(int[][] routes, int[][] ranks,int[][] distances, int[] newRoute, int i){
-		int nearest = ranks[i-1][0]+1;
-		int[] nearestRoute = getRoute(routes, nearest);
-		if( nearestRoute==null){
+		
+		int nearest =0;
+		int[] nearestRoute = null;
+		
+		while( nearestRoute==null && !contains(newRoute, i)){
 			addToRoute(newRoute, i);
-			if(contains(newRoute, nearest)){
-				return false;
-			}
-			boolean finded = linkNearest(routes,ranks,distances,newRoute,nearest);
-			if(!finded){
-				return false;
+			nearest = ranks[i-1][0]+1;
+			nearestRoute = getRoute(routes, nearest);
+			build+=distances[i-1][ranks[i-1][0]];
+			i = nearest;
+		}
+		
+		if(nearestRoute!=null){
+			for(int d:newRoute){
+				addToRoute(nearestRoute, d);
 			}
 		}
-
-		removeFromRoute(newRoute, i);
-		addToRoute(nearestRoute, i);
-		build+=distances[i-1][ranks[i-1][0]];
-		return true;
+		
+		return nearestRoute!=null;
 	}
 	
 	private static int[] getRoute(int[][] arr, int val){
