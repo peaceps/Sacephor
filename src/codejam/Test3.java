@@ -8,7 +8,7 @@ public class Test3
     public static void main( String[] args ) throws Exception
     {
         BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/Chain.small.1496906258140.input.txt" ) );
+            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/Chain.large.1496906878699.input.txt" ) );
         reader.readLine();
         String line = null;
         int count = 0;
@@ -22,23 +22,11 @@ public class Test3
 
     private static void papapa( int n, int k, int count )
     {
-        boolean[] elec = new boolean[ n ];
-        elec[0] = true;
-        boolean[] on = new boolean[ n ];
-        for( int i = 0; i < k; i++ )
+        int period = 1;
+        for( int i = 0; i < n; i++ )
         {
-            pa( elec, on );
+            period*=2;
         }
-        System.out.println( "Case #" + count + ": " + ( elec[n - 1] && on[n - 1] ? "ON" : "OFF" ) );
-    }
-
-    private static void pa( boolean[] elec, boolean[] on )
-    {
-        on[0] = !on[0];
-        for( int i = 1; i < elec.length; i++ )
-        {
-            on[i] = elec[i] ? !on[i] : on[i];
-            elec[i] = elec[i - 1] & on[i - 1];
-        }
+        System.out.println( "Case #" + count + ": " + ( ( k + 1 ) % period == 0 ? "ON" : "OFF" ) );
     }
 }
