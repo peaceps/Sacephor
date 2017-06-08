@@ -19,16 +19,20 @@ public class Test2
         Map<String, Integer> depth = new HashMap<>();
         Map<String, String> taskSrc = new HashMap<>();
         Map<String, List<List<String>>> srcPackages = new HashMap<>();
-        Set<String> resultBuffer = new HashSet<>();
+        Map<String, Boolean> resultBuffer = new HashMap<>();
 
         BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/StatOfDistTask.small.1496815744663.input" ) );
+            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/StatOfDistTask.large.1496898329315.input" ) );
         String line = null;
         while( ( line = reader.readLine() ) != null )
         {
             process( line, failed, childs, depth, taskSrc, srcPackages, resultBuffer );
         }
-        resultBuffer.forEach( result -> processResult( failed, taskSrc, srcPackages, resultBuffer, result ) );
+        resultBuffer.entrySet().forEach(
+            entry -> processResult( failed, taskSrc, srcPackages, resultBuffer, entry.getKey(), entry.getValue(), true,
+                true ) );
+        taskSrc.keySet().forEach(
+            timeout -> processResult( failed, taskSrc, srcPackages, resultBuffer, timeout, false, true, false ) );
         reader.close();
 
         failed.entrySet().stream().sorted( ( x, y ) -> depth.get( x.getKey() ) - depth.get( y.getKey() ) ).forEach(
@@ -48,7 +52,7 @@ public class Test2
 
     private static void process( String line, Map<String, Integer> failed, Map<String, Set<String>> childs,
                                  Map<String, Integer> depth, Map<String, String> taskSrc,
-                                 Map<String, List<List<String>>> srcPackages, Set<String> resultBuffer )
+                                 Map<String, List<List<String>>> srcPackages, Map<String, Boolean> resultBuffer )
     {
         if( line.contains( "List" ) )
         {
@@ -107,53 +111,53 @@ public class Test2
     }
 
     private static void processResults( String line, Map<String, Integer> failed, Map<String, String> taskSrc,
-                                        Map<String, List<List<String>>> srcPackages, Set<String> resultBuffer )
+                                        Map<String, List<List<String>>> srcPackages, Map<String, Boolean> resultBuffer )
     {
-        String result = line.substring( line.indexOf( ' ' ) + 1, line.indexOf( 'F' ) - 2 );
-        taskSrc = 
-        if( line.contains( "Success" ) )
-        {
-            return;
-        }
-        else if( line.contains( "Success" ) )
-        {
-            
-        }
+        String result = line.substring( line.indexOf( ' ' ) + 1, line.lastIndexOf( ',' ) );
+        processResult( failed, taskSrc, srcPackages, resultBuffer, result, line.contains( "uccess" ), false, true );
     }
 
     private static void processResult( Map<String, Integer> failed, Map<String, String> taskSrc,
-                                       Map<String, List<List<String>>> srcPackages, Set<String> resultBuffer,
-                                       String result, boolean readover )
+                                       Map<String, List<List<String>>> srcPackages, Map<String, Boolean> resultBuffer,
+                                       String result, boolean success, boolean readover, boolean hasResult )
     {
         String src = taskSrc.get( result );
         if( src == null && !readover )
         {
-            resultBuffer.add( result );
+            resultBuffer.put( result, success );
             return;
         }
 
-        List<String> owner = null;
-        for( List<String> p : srcPackages.get( src ) )
+        if( hasResult )
         {
-            if( p.contains( result ) )
+            taskSrc.remove( result );
+        }
+
+        if( !success )
+        {
+            List<String> owner = null;
+            for( List<String> p : srcPackages.get( src ) )
             {
-                owner = p;
-                break;
+                if( p.contains( result ) )
+                {
+                    owner = p;
+                    break;
+                }
             }
-        }
-        if( owner == null )
-        {
-            return;
-        }
-        srcPackages.get( src ).remove( owner );
+            if( owner == null )
+            {
+                return;
+            }
+            srcPackages.get( src ).remove( owner );
 
-        if( !failed.containsKey( src ) )
-        {
-            failed.put( src, 1 );
-        }
-        else
-        {
-            failed.put( src, failed.get( src ) + 1 );
+            if( !failed.containsKey( src ) )
+            {
+                failed.put( src, 1 );
+            }
+            else
+            {
+                failed.put( src, failed.get( src ) + 1 );
+            }
         }
     }
 }
