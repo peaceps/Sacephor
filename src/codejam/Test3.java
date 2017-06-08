@@ -23,10 +23,7 @@ public class Test3
     private static void papapa( int n, int k, int count )
     {
         int period = 1;
-        for( int i = 0; i < n; i++ )
-        {
-            period*=2;
-        }
+        period <<= n;
         System.out.println( "Case #" + count + ": " + ( ( k + 1 ) % period == 0 ? "ON" : "OFF" ) );
     }
 }
