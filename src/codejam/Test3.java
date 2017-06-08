@@ -22,8 +22,6 @@ public class Test3
 
     private static void papapa( int n, int k, int count )
     {
-        int period = 1;
-        period <<= n;
-        System.out.println( "Case #" + count + ": " + ( ( k + 1 ) % period == 0 ? "ON" : "OFF" ) );
+        System.out.println( "Case #" + count + ": " + ( ( k + 1 ) % ( 1 << n ) == 0 ? "ON" : "OFF" ) );
     }
 }
