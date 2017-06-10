@@ -2,17 +2,19 @@ package codejam;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 
 public class Test1
 {
     public static void main( String[] args ) throws Exception
     {
-
-        BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/Thrump.large.1496811055229.input.txt" ) );
+    	String folder = "C:/Users/Sacephor/Desktop/";
+    	FileWriter writer = new FileWriter(folder + "Test1Output.txt");
+        BufferedReader reader =  new BufferedReader( new FileReader( folder+"1.txt" ) );
         reader.readLine();
         String line = null;
         int casecount = 0;
+        String result = "";
         while( ( line = reader.readLine() ) != null )
         {
             casecount++;
@@ -20,12 +22,14 @@ public class Test1
             int maxThreshold = Integer.parseInt( elements[0] );
             String friends = elements[1];
 
-            naviRecruit( casecount, maxThreshold, friends );
+            result +=naviRecruit( casecount, maxThreshold, friends )+"\n";
         }
-        reader.close();
+        reader.close();        
+        writer.write(result.substring(0, result.length()-1));
+        writer.close();
     }
 
-    private static void naviRecruit( int casecount, int maxThreshold, String friends )
+    private static String naviRecruit( int casecount, int maxThreshold, String friends )
     {
         int navi = 0;
         int total = 0;
@@ -39,6 +43,6 @@ public class Test1
                 total += l;
             }
         }
-        System.out.println( "Case #" + casecount + ": " + navi );
+        return "Case #" + casecount + ": " + navi ;
     }
 }

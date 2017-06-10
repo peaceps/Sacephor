@@ -2,6 +2,7 @@ package codejam;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,6 +15,9 @@ public class Test2
 {
     public static void main( String[] args ) throws Exception
     {
+    	String folder = "C:/Users/Sacephor/Desktop/";
+    	FileWriter writer = new FileWriter(folder + "Test2Output.txt");
+    	
         Map<String, Integer> failed = new HashMap<>();
         Map<String, Set<String>> childs = new HashMap<>();
         Map<String, Integer> depth = new HashMap<>();
@@ -22,7 +26,7 @@ public class Test2
         Map<String, Boolean> resultBuffer = new HashMap<>();
 
         BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/StatOfDistTask.small.1496815744663.input" ) );
+            new BufferedReader( new FileReader( folder+"StatOfDistTask.small.1496815744663.input" ) );
         String line = null;
         while( ( line = reader.readLine() ) != null )
         {
@@ -36,19 +40,16 @@ public class Test2
         taskSrc.keySet().forEach(
             timeout -> processResult( failed, taskSrc, srcPackages, resultBuffer, timeout, false, true, false ) );
 
-        failed.entrySet().stream().sorted( ( x, y ) -> depth.get( x.getKey() ) - depth.get( y.getKey() ) ).forEach(
-            entry -> {
-            if( entry.getValue() > 0 )
-            {
-                System.out.print( '{' );
-                System.out.print( depth.get( entry.getKey() ) );
-                System.out.print( ", " );
-                System.out.print( entry.getKey() );
-                System.out.print( ", " );
-                System.out.print( entry.getValue() );
-                System.out.println( '}' );
-            }
-        } );
+        String result = "";
+        for(Map.Entry<String, Integer> entry: failed.entrySet())
+        {
+        	if(entry.getValue()>0)
+        	{
+        		result += "{"+depth.get( entry.getKey() ) +", "+ entry.getKey() +", " + entry.getValue()  +"}\n";
+        	}
+        }
+        writer.write(result.substring(0, result.length()-1));
+        writer.close();
     }
 
     private static void process( String line, Map<String, Integer> failed, Map<String, Set<String>> childs,

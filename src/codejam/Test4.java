@@ -2,18 +2,17 @@ package codejam;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-
-
+import java.io.FileWriter;
 
 public class Test4
 {
-	
-	private static int build = 0;
-
     public static void main( String[] args ) throws Exception
 	{
+    	String folder = "C:/Users/Sacephor/Desktop/";
+    	FileWriter writer = new FileWriter(folder + "Test4Output.txt");
+    	
         BufferedReader reader =
-            new BufferedReader( new FileReader( "D:/userdata/xinfu/Desktop/Subway_large_1496988703403" ) );
+            new BufferedReader( new FileReader( folder+"Subway_large_1496988703403" ) );
 
         String caseId = reader.readLine();
         int districtCount = Integer.parseInt( reader.readLine() );
@@ -42,9 +41,9 @@ public class Test4
         }
         reader.close();
 
-
         int[][] sort = getSorted( distances );
 
+        int build = 0;
         while( !full( routes ) )
         {
             for( int i = 0; i < sort.length; i++ )
@@ -64,7 +63,8 @@ public class Test4
             }
         }
 
-        System.out.println( caseId.substring( 0, 4 ) + " " + caseId.substring( 4 ) + " " + build );
+        writer.write( caseId.substring( 0, 4 ) + " " + caseId.substring( 4 ) + " " + build );
+        writer.close();
 	}
 
     private static boolean buildRouteByEdge( int[][] routes, int i, int j, int districtCount,
