@@ -66,28 +66,13 @@ public class Test5
 		return build;
 	}
 
-	private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
-	{
-		for(int i = 0 ; i < adjacencies[site].length;i++){
-			   if(adjacencies[site][i]){
-			    	cover[i] = true;
-			    	for (int j=0; j<adjacencies.length;j++){
-						adjacencies[j][i] = false;
-						adjacencies[i][j] = false;
-			    	}
-			   }
-		   }
-		   cover[site] = true;
-		   return 1;
-	}
-    
-    private static int getEndpointNeighbor(boolean[][] adjacencies, boolean[] cover ){
-    	int neighbor =-1;
-    	for(int i = 0 ; i < adjacencies.length ; i++){
-    		if(cover[i]){
-    			continue;
-    		}
-    		for(int j = 0 ; j<adjacencies[i].length;j++){
+	private static int getEndpointNeighbor(boolean[][] adjacencies, boolean[] cover ){
+		int neighbor =-1;
+		for(int i = 0 ; i < adjacencies.length ; i++){
+			if(cover[i]){
+				continue;
+			}
+			for(int j = 0 ; j<adjacencies[i].length;j++){
 	    		if(adjacencies[i][j]){
 	    			if(neighbor==-1){
 	    				neighbor = j;
@@ -97,35 +82,35 @@ public class Test5
 	    			}
 	    		}
 	    	}
-    		if(neighbor!=-1){
-    			return neighbor;
-    		}
+			if(neighbor!=-1){
+				return neighbor;
+			}
 	    }
-    	return neighbor;
-    }
-    
-    private static int buildIsolateCount(boolean[][] adjacencies, boolean[] cover ){
-    	int isoCount = 0;
-    	for(int i =0 ; i < adjacencies.length ; i++){
-    		if(cover[i]){
-    			continue;
-    		}
-    		boolean iso = true;
-    		for(boolean neighbor: adjacencies[i]){
-    			if(neighbor){
-    				iso=false;
-    				break;
-    			}
-    		}
-    		if(iso){
-    			isoCount++;
-    			cover[i] = true;
-    		}
-    	}
-    	return isoCount;
-    }
-    
-    private static int buildLoop(boolean[][] adjacencies, boolean[] cover , int depth){
+		return neighbor;
+	}
+
+	private static int buildIsolateCount(boolean[][] adjacencies, boolean[] cover ){
+		int isoCount = 0;
+		for(int i =0 ; i < adjacencies.length ; i++){
+			if(cover[i]){
+				continue;
+			}
+			boolean iso = true;
+			for(boolean neighbor: adjacencies[i]){
+				if(neighbor){
+					iso=false;
+					break;
+				}
+			}
+			if(iso){
+				isoCount++;
+				cover[i] = true;
+			}
+		}
+		return isoCount;
+	}
+
+	private static int buildLoop(boolean[][] adjacencies, boolean[] cover , int depth){
     	int[] index = getSortedIndex(adjacencies);
     	int minBuild = -1;
     	boolean[][] minAdjacencies = adjacencies;
@@ -144,8 +129,17 @@ public class Test5
     		
         	int build = 0;
             	build+= buildSite(adjacenciesCopy, coverCopy, maxEdgeIndex);
+            	if(build == minBuild){
+            		break;
+            	}
        	       build += buildEndpoint(adjacenciesCopy, coverCopy);
+           	if(build == minBuild){
+        		break;
+        	}
       	       build +=buildIsolateCount(adjacenciesCopy, coverCopy);
+           	if(build == minBuild){
+        		break;
+        	}
       	       if(!coverAll(coverCopy)){
       	    	   build+= buildLoop(adjacenciesCopy, coverCopy,depth+1);
       	       }
@@ -164,7 +158,22 @@ public class Test5
     	return minBuild;
     }
         
-    private static boolean coverAll(boolean[] cover){
+    private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
+	{
+		for(int i = 0 ; i < adjacencies[site].length;i++){
+			   if(adjacencies[site][i]){
+			    	cover[i] = true;
+			    	for (int j=0; j<adjacencies.length;j++){
+						adjacencies[j][i] = false;
+						adjacencies[i][j] = false;
+			    	}
+			   }
+		   }
+		   cover[site] = true;
+		   return 1;
+	}
+
+	private static boolean coverAll(boolean[] cover){
     	for(boolean coverd: cover){
     		if(!coverd){
     			return false;
@@ -173,11 +182,6 @@ public class Test5
     	return true;
     }
     
-    private static String getResultString(int casecount, int result){
-    	return "Case #" + casecount + ": " + result +"\n";
-    }
-    
-
     private static int[] getSortedIndex( boolean[][] adjacencies )
     {
     	int[] edgeCounts = new int[adjacencies.length];
@@ -252,4 +256,8 @@ public class Test5
         index[j] = index[i];
         index[i] = temp;
     }
+
+	private static String getResultString(int casecount, int result){
+		return "Case #" + casecount + ": " + result +"\n";
+	}
 }

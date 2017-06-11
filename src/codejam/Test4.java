@@ -115,38 +115,19 @@ public class Test4
         return true;
     }
 	
-    private static int[][] getSorted( int[][] distances )
-    {
-        int size = distances.length;
-        int[][] sort = new int[ ( size + 1 ) * size / 2 ][];
-        int k = 0;
-        for( int i = 0; i < distances.length; i++ )
-        {
-            for( int j = 0; j < distances[i].length; j++ )
-            {
-                sort[k] = new int[ 2 ];
-                sort[k][0] = i;
-                sort[k][1] = j;
-                k++;
-            }
-        }
-        indexQuickSort( distances, sort, 0, sort.length - 1 );
-        return sort;
+    private static void addToRoute( int[] route, int district )
+	{
+	    for( int i = 0; i < route.length; i++ )
+	    {
+	        if( route[i] == 0 )
+	        {
+	            route[i] = district;
+	            break;
+	        }
+	    }
 	}
 
-    private static int size( int[][] routes )
-    {
-        int count = 0;
-        for( int[] route : routes )
-        {
-            if(route!=null){
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private static int[] getRoute( int[][] routes, int district )
+	private static int[] getRoute( int[][] routes, int district )
     {
         for( int[] route : routes )
         {
@@ -170,54 +151,26 @@ public class Test4
         }
     }
 
-    private static boolean contains( int[] arr, int val )
-    {
-        for( int v : arr )
-        {
-            if( val == v )
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    private static int[][] getSorted( int[][] distances )
+	{
+	    int size = distances.length;
+	    int[][] sort = new int[ ( size + 1 ) * size / 2 ][];
+	    int k = 0;
+	    for( int i = 0; i < distances.length; i++ )
+	    {
+	        for( int j = 0; j < distances[i].length; j++ )
+	        {
+	            sort[k] = new int[ 2 ];
+	            sort[k][0] = i;
+	            sort[k][1] = j;
+	            k++;
+	        }
+	    }
+	    indexQuickSort( distances, sort, 0, sort.length - 1 );
+	    return sort;
+	}
 
-    private static boolean full( int[][] routes )
-    {
-        if( size( routes ) != 1 )
-        {
-            return false;
-        }
-        for( int[] route : routes )
-        {
-            if( route == null )
-            {
-                continue;
-            }
-            for( int i : route )
-            {
-                if( i == 0 )
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-	
-    private static void addToRoute( int[] route, int district )
-    {
-        for( int i = 0; i < route.length; i++ )
-        {
-            if( route[i] == 0 )
-            {
-                route[i] = district;
-                break;
-            }
-        }
-    }
-	
-    private static void indexQuickSort( int[][] distances, int[][] sort, int i, int j )
+	private static void indexQuickSort( int[][] distances, int[][] sort, int i, int j )
     {
         int start = i;
         int end = j;
@@ -269,5 +222,52 @@ public class Test4
         sort[j] = sort[i];
         sort[i] = temp;
     }
+
+	private static boolean contains( int[] arr, int val )
+	{
+	    for( int v : arr )
+	    {
+	        if( val == v )
+	        {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+
+	private static boolean full( int[][] routes )
+	{
+	    if( size( routes ) != 1 )
+	    {
+	        return false;
+	    }
+	    for( int[] route : routes )
+	    {
+	        if( route == null )
+	        {
+	            continue;
+	        }
+	        for( int i : route )
+	        {
+	            if( i == 0 )
+	            {
+	                return false;
+	            }
+	        }
+	    }
+	    return true;
+	}
+
+	private static int size( int[][] routes )
+	{
+	    int count = 0;
+	    for( int[] route : routes )
+	    {
+	        if(route!=null){
+	            count++;
+	        }
+	    }
+	    return count;
+	}
 	
 }
