@@ -214,6 +214,7 @@ public class Test5
                 {
                     exchange( index, j, i );
                     iFlag = !iFlag;
+                    j--;
                 }
                 else
                 {
@@ -226,6 +227,7 @@ public class Test5
                 {
                     exchange( index, i, j );
                     iFlag = !iFlag;
+                    i++;
                 }
                 else
                 {

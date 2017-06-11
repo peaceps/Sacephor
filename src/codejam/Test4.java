@@ -231,6 +231,7 @@ public class Test4
                 {
                     exchange( sort, j, i );
                     iFlag = !iFlag;
+                    j--;
                 }
                 else
                 {
@@ -243,6 +244,7 @@ public class Test4
                 {
                     exchange( sort, i, j );
                     iFlag = !iFlag;
+                    i++;
                 }
                 else
                 {
