@@ -129,16 +129,16 @@ public class Test5
     		
         	int build = 0;
             	build+= buildSite(adjacenciesCopy, coverCopy, maxEdgeIndex);
-            	if(build == minBuild){
-            		break;
+            	if(build >= minBuild){
+            		continue;
             	}
        	       build += buildEndpoint(adjacenciesCopy, coverCopy);
-           	if(build == minBuild){
-        		break;
+           	if(build >= minBuild){
+           		continue;
         	}
       	       build +=buildIsolateCount(adjacenciesCopy, coverCopy);
-           	if(build == minBuild){
-        		break;
+           	if(build >= minBuild){
+           		continue;
         	}
       	       if(!coverAll(coverCopy)){
       	    	   build+= buildLoop(adjacenciesCopy, coverCopy,depth+1);
