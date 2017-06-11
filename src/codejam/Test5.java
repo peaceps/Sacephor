@@ -42,7 +42,7 @@ public class Test5
         //	Stream.of(adjacencies).forEach(a -> System.out.println(Arrays.toString(a)));
         }
 
-    	System.out.println(result);
+  //  	System.out.println(result);
         reader.close();
         writer.write(result.substring(0, result.length()-1));
         writer.close();
