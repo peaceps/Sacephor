@@ -12,7 +12,7 @@ public class Test5
  //       String folder = "D:/userdata/xinfu/Desktop/";
         String folder = "C:/Users/Sacephor/Desktop/";
     	FileWriter writer = new FileWriter(folder + "Test5Output.txt");
-        BufferedReader reader = new BufferedReader( new FileReader( folder + "bts_deployment_small_1497230672520" ) );
+        BufferedReader reader = new BufferedReader( new FileReader( folder + "1.txt" ) );
         reader.readLine();
         
         int casecount = 0;
@@ -52,7 +52,7 @@ public class Test5
 	       build += buildEndpoint(adjacencies, cover);
 	       build +=buildIsolateCount(adjacencies, cover);
     	if(!coverAll(cover)){
-	       build +=buildKKKKKKK(adjacencies, cover);
+	       build +=buildLoop(adjacencies, cover);
     	}
        return build;
     }
@@ -60,14 +60,14 @@ public class Test5
 	private static int buildEndpoint(boolean[][] adjacencies, boolean[] cover)
 	{
 		int build =0;
-		int[] kkk = getkkk(adjacencies);
+		int[] kkk = getEndpoints(adjacencies);
 		for(int k:kkk){
 	    	   build+=buildSite(adjacencies, cover, k);
 		}
 		return build;
 	}
 	
-	private static int[] getkkk(boolean[][] adjacencies){
+	private static int[] getEndpoints(boolean[][] adjacencies){
 		int[] k = new int[adjacencies.length];
 		int n =0;
 		for(int i =0; i <adjacencies.length;i++){
@@ -111,9 +111,21 @@ public class Test5
 		return isoCount;
 	}
 	
-	private static boolean buildK(boolean[][] adjacencies, boolean[] cover , int[] list, int left){
+	private static int buildLoop(boolean[][] adjacencies, boolean[] cover){
+		int min =1 ;
+		
+		while(min<cover.length){
+			if(buildLoopWithGivenNumber(adjacencies, cover, getSortedIndex(adjacencies, cover), min)){
+				break;
+			}
+			min++;
+		}
+		return min;
+	}
+	
+	private static boolean buildLoopWithGivenNumber(boolean[][] adjacencies, boolean[] cover , int[] selectable, int left){
 		if(left==1){
-			for(int point: list){
+			for(int point: selectable){
 		    	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
 		    	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
 				buildSite(adjacenciesCopy, coverCopy,point);
@@ -126,46 +138,22 @@ public class Test5
 
     	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
     	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
-    	boolean[][] adjacenciesCopyCopy = copyMatrix(adjacencies);
-    	boolean[] coverCopyCopy = Arrays.copyOf(cover, cover.length);
     	
-		buildSite(adjacenciesCopy, coverCopy, list[0]);
-		if(buildK(adjacenciesCopy, coverCopy, getSortedIndex(adjacenciesCopy, coverCopy), left-1)){
+		buildSite(adjacencies, cover, selectable[0]);
+		if(buildLoopWithGivenNumber(adjacencies, cover, getSortedIndex(adjacencies, cover), left-1)){
 			return true;
 		}
-		buildSite(adjacenciesCopyCopy, coverCopyCopy, list[1]);
-		if(buildK(adjacenciesCopyCopy, coverCopyCopy, remove(getSortedIndex(adjacenciesCopyCopy, coverCopyCopy),list[0]),left-1)){
+		buildSite(adjacenciesCopy, coverCopy, selectable[1]);
+		if(buildLoopWithGivenNumber(adjacenciesCopy, coverCopy, remove(getSortedIndex(adjacenciesCopy, coverCopy),selectable[0]),left-1)){
 			return true;
 		}
 		
 		return false;
 	}
 
-	private static int buildKKKKKKK(boolean[][] adjacencies, boolean[] cover){
-		int k =1 ;
-		
-		while(k<cover.length){
-			if(buildK(adjacencies, cover, getSortedIndex(adjacencies, cover), k)){
-				break;
-			}
-			k++;
-		}
-		return k;
-	}
-
-	
-	
-	private static boolean[][] copyMatrix(boolean[][] matrix){
-		boolean[][] copy = new boolean[matrix.length][];
-    	for(int i = 0; i < matrix.length;i++){
-    		copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
-    	}
-    	return copy;
-	}
-        
-    private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
+	private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
 	{
-    	boolean act = !cover[site];
+		boolean act = !cover[site];
 		for(int i=0;i<adjacencies.length;i++){
 			if(adjacencies[site][i]){
 				adjacencies[site][i]= false;
@@ -178,7 +166,15 @@ public class Test5
 	return act?1:0;
 	}
 
-	private static boolean coverAll(boolean[] cover){
+	private static boolean[][] copyMatrix(boolean[][] matrix){
+		boolean[][] copy = new boolean[matrix.length][];
+    	for(int i = 0; i < matrix.length;i++){
+    		copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
+    	}
+    	return copy;
+	}
+        
+    private static boolean coverAll(boolean[] cover){
     	for(boolean coverd: cover){
     		if(!coverd){
     			return false;
