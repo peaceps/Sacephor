@@ -9,7 +9,8 @@ public class Test5
 {
     public static void main( String[] args ) throws Exception
     {
-        String folder = "D:/userdata/xinfu/Desktop/";
+ //       String folder = "D:/userdata/xinfu/Desktop/";
+        String folder = "C:/Users/Sacephor/Desktop/";
     	FileWriter writer = new FileWriter(folder + "Test5Output.txt");
         BufferedReader reader = new BufferedReader( new FileReader( folder + "bts_deployment_small_1497230672520" ) );
         reader.readLine();
@@ -50,8 +51,8 @@ public class Test5
     	int build = 0;
 	       build += buildEndpoint(adjacencies, cover);
 	       build +=buildIsolateCount(adjacencies, cover);
-    	while(!coverAll(cover)){
-	       build +=buildLoop(adjacencies, cover,0);
+    	if(!coverAll(cover)){
+	       build +=buildKKKKKKK(adjacencies, cover);
     	}
        return build;
     }
@@ -59,34 +60,34 @@ public class Test5
 	private static int buildEndpoint(boolean[][] adjacencies, boolean[] cover)
 	{
 		int build =0;
-		int leafMountPoint;
-		while((leafMountPoint=getEndpointNeighbor(adjacencies, cover))!=-1){
-	    	   build+=buildSite(adjacencies, cover, leafMountPoint);
-	       }
+		int[] kkk = getkkk(adjacencies);
+		for(int k:kkk){
+	    	   build+=buildSite(adjacencies, cover, k);
+		}
 		return build;
 	}
-
-	private static int getEndpointNeighbor(boolean[][] adjacencies, boolean[] cover ){
-		int neighbor =-1;
-		for(int i = 0 ; i < adjacencies.length ; i++){
-			if(cover[i]){
-				continue;
+	
+	private static int[] getkkk(boolean[][] adjacencies){
+		int[] k = new int[adjacencies.length];
+		int n =0;
+		for(int i =0; i <adjacencies.length;i++){
+			int count =0;
+			int neighbor = -1;
+			for(int j=0;j< adjacencies[i].length;j++){
+				if(adjacencies[i][j]){
+					neighbor = j;
+					count++;
+				}
+				if(count>1){
+					break;
+				}
 			}
-			for(int j = 0 ; j<adjacencies[i].length;j++){
-	    		if(adjacencies[i][j]){
-	    			if(neighbor==-1){
-	    				neighbor = j;
-	    			}else{
-	    				neighbor = -1;
-	    				break;
-	    			}
-	    		}
-	    	}
-			if(neighbor!=-1){
-				return neighbor;
+			if(count==1&&!contains(k, neighbor)){
+				k[n++]=neighbor;
 			}
-	    }
-		return neighbor;
+		}
+		k = Arrays.copyOf(k, n);
+		return k;
 	}
 
 	private static int buildIsolateCount(boolean[][] adjacencies, boolean[] cover ){
@@ -109,71 +110,72 @@ public class Test5
 		}
 		return isoCount;
 	}
-
-	private static int buildLoop(boolean[][] adjacencies, boolean[] cover , int depth){
-    	int[] index = getSortedIndex(adjacencies);
-    	int minBuild = -1;
-    	boolean[][] minAdjacencies = adjacencies;
-    	boolean[] minCover = cover;
-    	
-    	for(int maxEdgeIndex : index){
-    		if(cover[maxEdgeIndex]){
-    			break;
-    		}
-
-        	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
-        	boolean[][] adjacenciesCopy = new boolean[adjacencies.length][];
-        	for(int i = 0; i < adjacencies.length;i++){
-        		adjacenciesCopy[i] = Arrays.copyOf(adjacencies[i], adjacencies[i].length);
-        	}
-    		
-        	int build = 0;
-            	build+= buildSite(adjacenciesCopy, coverCopy, maxEdgeIndex);
-            if( build >= minBuild && minBuild != -1 )
-            {
-            		continue;
-            	}
-       	       build += buildEndpoint(adjacenciesCopy, coverCopy);
-            if( build >= minBuild && minBuild != -1 )
-            {
-           		continue;
-        	}
-      	       build +=buildIsolateCount(adjacenciesCopy, coverCopy);
-            if( build >= minBuild && minBuild != -1 )
-            {
-           		continue;
-        	}
-      	       if(!coverAll(coverCopy)){
-      	    	   build+= buildLoop(adjacenciesCopy, coverCopy,depth+1);
-      	       }
-      	       
-        	if(minBuild== -1 || build< minBuild){
-        		minBuild = build;
-        		minAdjacencies = adjacenciesCopy;
-        		minCover = coverCopy;
-        	}
-    	}
-    	
-		for(int i = 0 ; i < minCover.length;i++ ){
-			cover[i] = minCover[i];
-			adjacencies[i] = minAdjacencies[i];
+	
+	private static boolean buildK(boolean[][] adjacencies, boolean[] cover , int[] list, int left){
+		if(left==1){
+			for(int point: list){
+		    	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
+		    	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
+				buildSite(adjacenciesCopy, coverCopy,point);
+				if(coverAll(coverCopy)){
+					return true;
+				}
+			}
+			return false;
 		}
-    	return minBuild;
-    }
+
+    	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
+    	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
+    	boolean[][] adjacenciesCopyCopy = copyMatrix(adjacencies);
+    	boolean[] coverCopyCopy = Arrays.copyOf(cover, cover.length);
+    	
+		buildSite(adjacenciesCopy, coverCopy, list[0]);
+		if(buildK(adjacenciesCopy, coverCopy, getSortedIndex(adjacenciesCopy, coverCopy), left-1)){
+			return true;
+		}
+		buildSite(adjacenciesCopyCopy, coverCopyCopy, list[1]);
+		if(buildK(adjacenciesCopyCopy, coverCopyCopy, remove(getSortedIndex(adjacenciesCopyCopy, coverCopyCopy),list[0]),left-1)){
+			return true;
+		}
+		
+		return false;
+	}
+
+	private static int buildKKKKKKK(boolean[][] adjacencies, boolean[] cover){
+		int k =1 ;
+		
+		while(k<cover.length){
+			if(buildK(adjacencies, cover, getSortedIndex(adjacencies, cover), k)){
+				break;
+			}
+			k++;
+		}
+		return k;
+	}
+
+	
+	
+	private static boolean[][] copyMatrix(boolean[][] matrix){
+		boolean[][] copy = new boolean[matrix.length][];
+    	for(int i = 0; i < matrix.length;i++){
+    		copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
+    	}
+    	return copy;
+	}
         
     private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
 	{
-		for(int i = 0 ; i < adjacencies[site].length;i++){
-			   if(adjacencies[site][i]){
-			    	cover[i] = true;
-			    	for (int j=0; j<adjacencies.length;j++){
-						adjacencies[j][i] = false;
-						adjacencies[i][j] = false;
-			    	}
-			   }
-		   }
-		   cover[site] = true;
-		   return 1;
+    	boolean act = !cover[site];
+		for(int i=0;i<adjacencies.length;i++){
+			if(adjacencies[site][i]){
+				adjacencies[site][i]= false;
+				adjacencies[i][site] = false;
+				act |= !cover[i];
+				cover[i] = true;
+			}
+		}
+		cover[site] = true;
+	return act?1:0;
 	}
 
 	private static boolean coverAll(boolean[] cover){
@@ -184,14 +186,43 @@ public class Test5
     	}
     	return true;
     }
+
+	private static boolean contains( int[] arr, int val )
+	{
+	    for( int v : arr )
+	    {
+	        if( val == v )
+	        {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
+	private static int[] remove(int[] arr, int val){
+		int [] newarr = new int[arr.length-1];
+		boolean met = false;
+		for(int i = 0; i< arr.length;i++){
+			if(arr[i]==val){
+				met = true;
+				continue;
+			}
+			if(!met){
+				newarr[i] = arr[i];
+			}else{
+				newarr[i-1] = arr[i];
+			}
+		}
+		return newarr;
+	}
     
-    private static int[] getSortedIndex( boolean[][] adjacencies )
+    private static int[] getSortedIndex( boolean[][] adjacencies , boolean[] cover)
     {
     	int[] edgeCounts = new int[adjacencies.length];
     	for(int i = 0 ; i < adjacencies.length;i++){
     		int count = 0 ;
-    		for(boolean neighbor : adjacencies[i]){
-    			if(neighbor){
+    		for(int j=0;j< adjacencies[i].length;j++){
+    			if(adjacencies[i][j]&&!cover[j]){
     				count++;
     			}
     		}
