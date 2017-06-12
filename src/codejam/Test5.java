@@ -9,9 +9,9 @@ public class Test5
 {
     public static void main( String[] args ) throws Exception
     {
-    	String folder = "C:/Users/Sacephor/Desktop/";
+        String folder = "D:/userdata/xinfu/Desktop/";
     	FileWriter writer = new FileWriter(folder + "Test5Output.txt");
-        BufferedReader reader =  new BufferedReader( new FileReader( folder+"1.txt" ) );
+        BufferedReader reader = new BufferedReader( new FileReader( folder + "bts_deployment_small_1497230672520" ) );
         reader.readLine();
         
         int casecount = 0;
@@ -129,15 +129,18 @@ public class Test5
     		
         	int build = 0;
             	build+= buildSite(adjacenciesCopy, coverCopy, maxEdgeIndex);
-            	if(build >= minBuild){
+            if( build >= minBuild && minBuild != -1 )
+            {
             		continue;
             	}
        	       build += buildEndpoint(adjacenciesCopy, coverCopy);
-           	if(build >= minBuild){
+            if( build >= minBuild && minBuild != -1 )
+            {
            		continue;
         	}
       	       build +=buildIsolateCount(adjacenciesCopy, coverCopy);
-           	if(build >= minBuild){
+            if( build >= minBuild && minBuild != -1 )
+            {
            		continue;
         	}
       	       if(!coverAll(coverCopy)){
