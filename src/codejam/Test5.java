@@ -9,10 +9,10 @@ public class Test5
 {
     public static void main( String[] args ) throws Exception
     {
- //       String folder = "D:/userdata/xinfu/Desktop/";
-        String folder = "C:/Users/Sacephor/Desktop/";
+        String folder = "D:/userdata/xinfu/Desktop/";
+        //     String folder = "C:/Users/Sacephor/Desktop/";
     	FileWriter writer = new FileWriter(folder + "Test5Output.txt");
-        BufferedReader reader = new BufferedReader( new FileReader( folder + "1.txt" ) );
+        BufferedReader reader = new BufferedReader( new FileReader( folder + "bts_deployment_large_1497317160101" ) );
         reader.readLine();
         
         int casecount = 0;
@@ -20,6 +20,7 @@ public class Test5
         String line = null;
         while ((line = reader.readLine())!=null){
         	casecount++;
+            System.out.println( casecount );
         	int blank = line.indexOf(' ');
         	int total = Integer.parseInt(blank==-1?line:line.substring(0,blank));
         	if(blank==-1 || blank == line.length()-1){
@@ -50,7 +51,7 @@ public class Test5
     private static int build(boolean[][] adjacencies ,boolean[] cover ){
     	int build = 0;
 	       build += buildEndpoint(adjacencies, cover);
-	       build +=buildIsolateCount(adjacencies, cover);
+        build += buildIsolate( adjacencies, cover );
     	if(!coverAll(cover)){
 	       build +=buildLoop(adjacencies, cover);
     	}
@@ -60,17 +61,26 @@ public class Test5
 	private static int buildEndpoint(boolean[][] adjacencies, boolean[] cover)
 	{
 		int build =0;
-		int[] kkk = getEndpoints(adjacencies);
-		for(int k:kkk){
-	    	   build+=buildSite(adjacencies, cover, k);
-		}
+        int[] endpoints = getEndpoints( adjacencies, cover );
+        while( endpoints.length > 0 )
+        {
+            for( int endpoint : endpoints )
+            {
+                build += buildSite( adjacencies, cover, endpoint );
+                endpoints = getEndpoints( adjacencies, cover );
+            }
+        }
 		return build;
 	}
 	
-	private static int[] getEndpoints(boolean[][] adjacencies){
+    private static int[] getEndpoints(boolean[][] adjacencies, boolean[] cover){
 		int[] k = new int[adjacencies.length];
 		int n =0;
 		for(int i =0; i <adjacencies.length;i++){
+            if( cover[i] )
+            {
+                continue;
+            }
 			int count =0;
 			int neighbor = -1;
 			for(int j=0;j< adjacencies[i].length;j++){
@@ -90,7 +100,8 @@ public class Test5
 		return k;
 	}
 
-	private static int buildIsolateCount(boolean[][] adjacencies, boolean[] cover ){
+    private static int buildIsolate( boolean[][] adjacencies, boolean[] cover )
+    {
 		int isoCount = 0;
 		for(int i =0 ; i < adjacencies.length ; i++){
 			if(cover[i]){
@@ -115,7 +126,8 @@ public class Test5
 		int min =1 ;
 		
 		while(min<cover.length){
-			if(buildLoopWithGivenNumber(adjacencies, cover, getSortedIndex(adjacencies, cover), min)){
+            if( buildLoopWithinLimit( adjacencies, cover, getSortedIndex( adjacencies, cover ), min ) )
+            {
 				break;
 			}
 			min++;
@@ -123,8 +135,15 @@ public class Test5
 		return min;
 	}
 	
-	private static boolean buildLoopWithGivenNumber(boolean[][] adjacencies, boolean[] cover , int[] selectable, int left){
-		if(left==1){
+    private static boolean buildLoopWithinLimit( boolean[][] adjacencies, boolean[] cover, int[] selectable, int limit )
+    {
+        if( !coverable( adjacencies, cover, selectable, limit ) )
+        {
+            return false;
+        }
+
+        if( limit == 1 )
+        {
 			for(int point: selectable){
 		    	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
 		    	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
@@ -139,17 +158,74 @@ public class Test5
     	boolean[][] adjacenciesCopy = copyMatrix(adjacencies);
     	boolean[] coverCopy = Arrays.copyOf(cover, cover.length);
     	
-		buildSite(adjacencies, cover, selectable[0]);
-		if(buildLoopWithGivenNumber(adjacencies, cover, getSortedIndex(adjacencies, cover), left-1)){
+    	int limit1 = limit;
+        limit1 -= buildSite( adjacencies, cover, selectable[0] );
+        limit1 -= buildEndpoint( adjacencies, cover );
+        limit1 -= buildIsolate( adjacencies, cover );
+        if( limit1 <= 0 && !coverAll( cover ) )
+        {
+            return false;
+        }
+        if( coverAll( cover ) )
+        {
+            return true;
+        }
+        if( buildLoopWithinLimit( adjacencies, cover, getSortedIndex( adjacencies, cover ), limit1 ) )
+        {
 			return true;
 		}
-		buildSite(adjacenciesCopy, coverCopy, selectable[1]);
-		if(buildLoopWithGivenNumber(adjacenciesCopy, coverCopy, remove(getSortedIndex(adjacenciesCopy, coverCopy),selectable[0]),left-1)){
+        int limit2 = limit;
+        limit2 -= buildSite( adjacenciesCopy, coverCopy, selectable[1] );
+        limit2 -= buildEndpoint( adjacenciesCopy, coverCopy );
+        limit2 -= buildIsolate( adjacenciesCopy, coverCopy );
+        if( limit2 <= 0 && !coverAll( coverCopy ) )
+        {
+            return false;
+        }
+        if( coverAll( coverCopy ) )
+        {
+            return true;
+        }
+        if( buildLoopWithinLimit( adjacenciesCopy, coverCopy,
+            remove( getSortedIndex( adjacenciesCopy, coverCopy ), selectable[0] ), limit2 ) )
+        {
 			return true;
 		}
 		
 		return false;
 	}
+
+    private static boolean coverable( boolean[][] adjacencies, boolean[] cover, int[] selectable, int limit )
+    {
+        int offCount = 0;
+        for( boolean on : cover )
+        {
+            if( !on )
+            {
+                offCount++;
+            }
+        }
+
+        int toCover = 0;
+        for( int limitCount = 0; limitCount < limit; limitCount++ )
+        {
+            int site = selectable[limitCount];
+            int neighbor = cover[site] ? 0 : 1;
+            for( int i = 0; i < adjacencies[site].length; i++ )
+            {
+                if( adjacencies[site][i] && !cover[i] )
+                {
+                    neighbor++;
+                }
+            }
+            toCover += neighbor;
+            if( toCover >= offCount )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
 	private static int buildSite(boolean[][] adjacencies, boolean[] cover, int site)
 	{
