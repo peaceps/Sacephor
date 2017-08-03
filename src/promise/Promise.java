@@ -1,11 +1,17 @@
 package promise;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class Promise
 {
@@ -16,24 +22,34 @@ public class Promise
 
     private State state = State.PENDING;
     
+    private int target;
+
+    private int done;
+
     private Object data;
 
-    private Throwable error;
+    private Object error;
 
     private List<FunctionWapper> handlers = new LinkedList<>();
     
     private Consumer<Object> closer;
 
-    public Promise( BiConsumer<Consumer<Object>, Consumer<Throwable>> run )
+    private Promise( int target, BiConsumer<Consumer<Object>, Consumer<Object>> execution )
     {
-        run.accept( this::fullfill, this::decline );
+        this.target = target;
+        execution.accept( this::fulfill, this::decline );
+    }
+
+    public Promise( BiConsumer<Consumer<Object>, Consumer<Object>> execution )
+    {
+        this( 1, execution );
     }
 
     public synchronized Promise then( Function<Object, Object> resolver )
     {
         if( state == State.RESOLVED )
         {
-            return runIt( resolver, data );
+            return apply( resolver, data );
         }
         else if( state == State.PENDING )
         {
@@ -46,7 +62,7 @@ public class Promise
     {
         if( state == State.REJECTED )
         {
-            return runIt( rejecter, error );
+            return apply( rejecter, error );
         }
         else if( state == State.PENDING )
         {
@@ -55,7 +71,7 @@ public class Promise
         return this;
     }
 
-    private Promise runIt( Function<Object, Object> func, Object param )
+    private Promise apply( Function<Object, Object> func, Object param )
     {
         try
         {
@@ -100,40 +116,65 @@ public class Promise
         }
     }
 
-    private synchronized void fullfill( Object ret )
+    private synchronized void fulfill( Object result )
     {
-        data = ret;
-        state = State.RESOLVED;
-        FunctionWapper f = null;
-        while( f == null && !handlers.isEmpty() )
+        if( state != State.PENDING )
         {
-            f = handlers.remove( 0 );
+            return;
+        }
+        done++;
+        if( done < target )
+        {
+            if( data == null )
+            {
+                data = new ArrayList<>();
+            }
+            ( ( List<Object> ) data ).add( result );
+            return;
+        }
+        else if( target > 1 )
+        {
+            ( ( List<Object> ) data ).add( result );
+        }
+        else
+        {
+            data = result;
+        }
+        state = State.RESOLVED;
+        boolean find = false;
+        while( !find && !handlers.isEmpty() )
+        {
+            FunctionWapper f = handlers.remove( 0 );
             if( !f.reject )
             {
                 then( f.function );
+                find = true;
                 break;
             }
         }
         
-        if( f == null && closer != null )
+        if( !find && closer != null )
         {
             done( closer );
         }
     }
 
-    private synchronized void decline( Throwable err )
+    private synchronized void decline( Object err )
     {
+        if( state != State.PENDING )
+        {
+            return;
+        }
         error = err;
         state = State.REJECTED;
 
-        FunctionWapper f = null;
-        while( f == null && !handlers.isEmpty() )
+        while( !handlers.isEmpty() )
         {
-            f = handlers.remove( 0 );
+            FunctionWapper f = handlers.remove( 0 );
             if( f.reject )
             {
                 katch( f.function );
-                break;
+                return;
             }
         }
     }
@@ -143,9 +184,37 @@ public class Promise
         return obj instanceof Promise ? ( Promise ) obj : new Promise( ( res, rej ) -> res.accept( obj ) );
     }
 
-    public static Promise reject( Throwable e )
+    public static Promise reject( Object e )
     {
         return new Promise( ( res, rej ) -> rej.accept( e ) );
+    }
+
+    public static Promise all( Promise... promises )
+    {
+        if( promises == null )
+        {
+            return resolve( "" );
+        }
+        return new Promise( promises.length, ( resolve, reject ) -> {
+            Stream.of( promises ).forEach( promise -> promise.katch( e -> {
+                reject.accept( e );
+                return null;
+            } ).done( data -> resolve.accept( data ) ) );
+        } );
+    }
+
+    public static Promise race( Promise... promises )
+    {
+        if( promises == null )
+        {
+            return resolve( "" );
+        }
+        return new Promise( ( resolve, reject ) -> {
+            Stream.of( promises ).forEach( promise -> promise.katch( e -> {
+                reject.accept( e );
+                return null;
+            } ).done( data -> resolve.accept( data ) ) );
+        } );
     }
 
     public static Promise setTimeout( int mil )
@@ -160,7 +229,34 @@ public class Promise
                 {
                     e.printStackTrace();
                 }
-                resolve.accept( "Resolved!" );
+                resolve.accept( "Resolved after " + mil + "!" );
+            } ).start();
+        } );
+    }
+
+    public static Promise get( String url )
+    {
+        return new Promise( ( resolve, reject ) -> {
+            new Thread( ( )->{
+                try
+                {
+                    URLConnection connection = new URL( url ).openConnection();
+                    connection.setConnectTimeout( 30000 );
+                    connection.setReadTimeout( 30000 );
+                    connection.connect();
+                    BufferedReader reader = new BufferedReader( new InputStreamReader( connection.getInputStream() ) );
+                    String result = "";
+                    String line = null;
+                    while( ( line = reader.readLine() ) != null )
+                    {
+                        result += line;
+                    }
+                    resolve.accept( result );
+                }
+                catch( Exception e )
+                {
+                    reject.accept( e );
+                }
             } ).start();
         } );
     }
@@ -180,13 +276,25 @@ public class Promise
 
     public static void main( String[] args )
     {
-        Promise.setTimeout( 3000 ).then( data -> {
-            System.out.println( "1" );
-            return Promise.setTimeout( 2000 );
-        } ).then( data -> {
-            System.out.println( "2" );
-            throw new NullPointerException( "Error" );
-        } ).katch( e -> e ).done( data -> System.out.println( data ) );
-        System.out.println( "Hei" );
+//        Promise.setTimeout( 3000 ).then( data -> {
+//            System.out.println( data );
+//            return Promise.setTimeout( 2000 );
+//        } ).then( data -> {
+//            System.out.println( data );
+//            throw new NullPointerException( "Error" );
+//        } ).katch( e -> e ).done( data -> System.out.println( data ) );
+        
+//        Promise.get( "http://localhost:6000/SiteEM.xml" ).then( data -> {
+//            System.out.println( data );
+//            return Promise.get( "http://localhost:6000/application_banner.txt" );
+//        } ).katch( e -> e ).done( data -> System.out.println( data ) );
+
+//        Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
+//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
+
+//        Promise.all( Promise.get( "http://localhost:6000/application_banner.txt" ),
+//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
+        
+        System.out.println( "Hello" );
     }
 }
