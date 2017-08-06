@@ -33,6 +33,8 @@ public class Promise
     private List<FunctionWapper> handlers = new LinkedList<>();
     
     private Consumer<Object> closer;
+    
+    private Consumer<Object> tomb;
 
     private Promise( int target, BiConsumer<Consumer<Object>, Consumer<Object>> execution )
     {
@@ -98,22 +100,39 @@ public class Promise
 
         if( closer != null )
         {
-            promise.done( closer );
+            promise.done( closer, tomb );
         }
 
         return promise;
     }
 
-    public void done( Consumer<Object> consumer )
+    public synchronized void done( Consumer<Object> c, Consumer<Object> t )
     {
-        if( state == State.RESOLVED )
+        try
         {
-            consumer.accept( data );
+            if( state == State.RESOLVED && c != null )
+            {
+                c.accept( data );
+            }
+            else if( state == State.REJECTED && t != null )
+            {
+                t.accept( error );
+            }
+            else
+            {
+                closer = c;
+                tomb = t;
+            }
         }
-        else
+        catch( Exception e )
         {
-            closer = consumer;
+            e.printStackTrace();
         }
+    }
+
+    public synchronized void done( Consumer<Object> c )
+    {
+        done( c, null );
     }
 
     private synchronized void fulfill( Object result )
@@ -153,9 +172,9 @@ public class Promise
             }
         }
         
-        if( !find && closer != null )
+        if( !find )
         {
-            done( closer );
+            done( closer, tomb );
         }
     }
 
@@ -168,14 +187,21 @@ public class Promise
         error = err;
         state = State.REJECTED;
 
-        while( !handlers.isEmpty() )
+        boolean find = false;
+        while( !find && !handlers.isEmpty() )
         {
             FunctionWapper f = handlers.remove( 0 );
             if( f.reject )
             {
                 katch( f.function );
-                return;
+                find = true;
+                break;
             }
+        }
+
+        if( !find )
+        {
+            done( closer, tomb );
         }
     }
 
@@ -191,29 +217,23 @@ public class Promise
 
     public static Promise all( Promise... promises )
     {
-        if( promises == null )
-        {
-            return resolve( "" );
-        }
-        return new Promise( promises.length, ( resolve, reject ) -> {
-            Stream.of( promises ).forEach( promise -> promise.katch( e -> {
-                reject.accept( e );
-                return null;
-            } ).done( data -> resolve.accept( data ) ) );
-        } );
+        return pickUp( promises.length, promises );
     }
 
     public static Promise race( Promise... promises )
+    {
+        return pickUp( 1, promises );
+    }
+
+    private static Promise pickUp( int winners, Promise... promises )
     {
         if( promises == null )
         {
             return resolve( "" );
         }
-        return new Promise( ( resolve, reject ) -> {
-            Stream.of( promises ).forEach( promise -> promise.katch( e -> {
-                reject.accept( e );
-                return null;
-            } ).done( data -> resolve.accept( data ) ) );
+        return new Promise( winners, ( resolve, reject ) -> {
+            Stream.of( promises ).forEach(
+                promise -> promise.done( data -> resolve.accept( data ), e -> reject.accept( e ) ) );
         } );
     }
 
@@ -241,8 +261,8 @@ public class Promise
                 try
                 {
                     URLConnection connection = new URL( url ).openConnection();
-                    connection.setConnectTimeout( 30000 );
-                    connection.setReadTimeout( 30000 );
+                    connection.setConnectTimeout( 5000 );
+                    connection.setReadTimeout( 5000 );
                     connection.connect();
                     BufferedReader reader = new BufferedReader( new InputStreamReader( connection.getInputStream() ) );
                     String result = "";
@@ -283,17 +303,18 @@ public class Promise
 //            System.out.println( data );
 //            throw new NullPointerException( "Error" );
 //        } ).katch( e -> e ).done( data -> System.out.println( data ) );
-        
+//        
 //        Promise.get( "http://localhost:6000/SiteEM.xml" ).then( data -> {
 //            System.out.println( data );
 //            return Promise.get( "http://localhost:6000/application_banner.txt" );
-//        } ).katch( e -> e ).done( data -> System.out.println( data ) );
-
+//        } ).done( data -> System.out.println( data ), e -> System.out.println( e ) );
+//
 //        Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
 //            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
-
+//
 //        Promise.all( Promise.get( "http://localhost:6000/application_banner.txt" ),
-//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
+//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).done( data -> System.out.println( data ),
+//            e -> System.out.println( e ) );
         
         System.out.println( "Hello" );
     }
