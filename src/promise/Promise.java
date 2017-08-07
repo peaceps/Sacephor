@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -13,30 +12,28 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class Promise
+public abstract class Promise
 {
-    private static enum State
+    protected static enum State
     {
         PENDING, RESOLVED, REJECTED
     }
 
-    private State state = State.PENDING;
-    
+    protected State state = State.PENDING;
+
     private int target;
 
     private int done;
 
-    private Object data;
+    protected Object data;
 
-    private Object error;
+    protected Object error;
 
-    private List<FunctionWapper> handlers = new LinkedList<>();
-    
-    private Consumer<Object> closer;
-    
-    private Consumer<Object> tomb;
+    protected Consumer<Object> closer;
 
-    private Promise( int target, BiConsumer<Consumer<Object>, Consumer<Object>> execution )
+    protected Consumer<Object> tomb;
+
+    protected Promise( int target, BiConsumer<Consumer<Object>, Consumer<Object>> execution )
     {
         this.target = target;
         execution.accept( this::fulfill, this::decline );
@@ -47,65 +44,16 @@ public class Promise
         this( 1, execution );
     }
 
-    public synchronized Promise then( Function<Object, Object> resolver, Function<Object, Object> rejecter )
+    public abstract Promise then( Function<Object, Object> resolver, Function<Object, Object> rejecter );
+
+    public Promise then( Function<Object, Object> res )
     {
-        if( state == State.RESOLVED )
-        {
-            return apply( resolver, data );
-        }
-        else if( state == State.REJECTED )
-        {
-            return apply( rejecter, error );
-        }
-        else if( state == State.PENDING )
-        {
-            handlers.add( new FunctionWapper( resolver, false ) );
-            handlers.add( new FunctionWapper( rejecter, true ) );
-        }
-        return this;
+        return then( res, null );
     }
 
-    public Promise then( Function<Object, Object> resolver )
+    public Promise katch( Function<Object, Object> rej )
     {
-        return then( resolver, null );
-    }
-
-    public Promise katch( Function<Object, Object> rejecter )
-    {
-        return then( null, rejecter );
-    }
-
-    private Promise apply( Function<Object, Object> func, Object param )
-    {
-        try
-        {
-            return attach( resolve( func.apply( param ) ) );
-        }
-        catch( Throwable e )
-        {
-            return attach( reject( e ) );
-        }
-    }
-
-    private Promise attach( Promise p )
-    {
-        Promise promise = handlers.stream().reduce( p, ( prev, handler ) -> {
-            if( handler.reject )
-            {
-                return prev.katch( handler.function );
-            }
-            else
-            {
-                return prev.then( handler.function );
-            }
-        }, ( u, t ) -> t );
-
-        if( closer != null )
-        {
-            promise.done( closer, tomb );
-        }
-
-        return promise;
+        return then( null, rej );
     }
 
     public synchronized void done( Consumer<Object> c, Consumer<Object> t )
@@ -167,22 +115,8 @@ public class Promise
             data = result;
         }
         state = State.RESOLVED;
-        boolean find = false;
-        while( !find && !handlers.isEmpty() )
-        {
-            FunctionWapper f = handlers.remove( 0 );
-            if( !f.reject )
-            {
-                then( f.function );
-                find = true;
-                break;
-            }
-        }
-        
-        if( !find )
-        {
-            done( closer, tomb );
-        }
+
+        execute();
     }
 
     private synchronized void decline( Object err )
@@ -194,32 +128,19 @@ public class Promise
         error = err;
         state = State.REJECTED;
 
-        boolean find = false;
-        while( !find && !handlers.isEmpty() )
-        {
-            FunctionWapper f = handlers.remove( 0 );
-            if( f.reject )
-            {
-                katch( f.function );
-                find = true;
-                break;
-            }
-        }
-
-        if( !find )
-        {
-            done( closer, tomb );
-        }
+        execute();
     }
 
-    public static Promise resolve( Object obj )
+    protected abstract void execute();
+
+    public static <T extends Promise> T resolve( Object obj )
     {
-        return obj instanceof Promise ? ( Promise ) obj : new Promise( ( res, rej ) -> res.accept( obj ) );
+        return obj instanceof Promise ? ( T ) obj : createPromise( ( res, rej ) -> res.accept( obj ) );
     }
 
-    public static Promise reject( Object e )
+    public static <T extends Promise> T reject( Object e )
     {
-        return new Promise( ( res, rej ) -> rej.accept( e ) );
+        return createPromise( ( res, rej ) -> rej.accept( e ) );
     }
 
     public static Promise all( Promise... promises )
@@ -238,15 +159,17 @@ public class Promise
         {
             return resolve( "" );
         }
-        return new Promise( winners, ( resolve, reject ) -> {
-            Stream.of( promises ).forEach(
-                promise -> promise.done( data -> resolve.accept( data ), e -> reject.accept( e ) ) );
-        } );
+        return createPromise(
+            winners,
+            ( resolve, reject ) -> {
+                Stream.of( promises ).forEach(
+                    promise -> promise.done( data -> resolve.accept( data ), e -> reject.accept( e ) ) );
+            } );
     }
 
     public static Promise setTimeout( int mil )
     {
-        return new Promise( ( resolve, reject ) -> {
+        return createPromise( ( resolve, reject ) -> {
             new Thread( ( ) -> {
                 try
                 {
@@ -263,8 +186,8 @@ public class Promise
 
     public static Promise get( String url )
     {
-        return new Promise( ( resolve, reject ) -> {
-            new Thread( ( )->{
+        return createPromise( ( resolve, reject ) -> {
+            new Thread( ( ) -> {
                 try
                 {
                     URLConnection connection = new URL( url ).openConnection();
@@ -288,17 +211,15 @@ public class Promise
         } );
     }
 
-    private static class FunctionWapper
+    private static <T extends Promise> T createPromise( BiConsumer<Consumer<Object>, Consumer<Object>> execution )
     {
-        Function<Object, Object> function;
+        return createPromise( 1, execution );
+    }
 
-        boolean reject;
-
-        public FunctionWapper( Function<Object, Object> func, boolean rej )
-        {
-            function = func;
-            reject = rej;
-        }
+    private static <T extends Promise> T createPromise( int target,
+                                                        BiConsumer<Consumer<Object>, Consumer<Object>> execution )
+    {
+        return ( T ) new StringedPromise( target, execution );
     }
 
     public static void main( String[] args )
@@ -316,13 +237,17 @@ public class Promise
 //            return Promise.get( "http://localhost:6000/application_banner.txt" );
 //        } ).done( data -> System.out.println( data ), e -> System.out.println( e ) );
 //
-//        Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
-//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
+//        for( int i = 0; i < 5; i++ )
+//        {
+//            Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
+//                Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done(
+//                data -> System.out.println( data ) );
+//        }
 //
 //        Promise.all( Promise.get( "http://localhost:6000/application_banner.txt" ),
 //            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).done( data -> System.out.println( data ),
 //            e -> System.out.println( e ) );
-        
+
         System.out.println( "Hello" );
     }
 }
