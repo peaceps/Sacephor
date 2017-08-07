@@ -52,21 +52,42 @@ public class Promise
 
     public synchronized Promise then( Function<Object, Object> res, Function<Object, Object> rej )
     {
-        if( state == State.RESOLVED )
-        {
-            return apply( res, data );
-        }
-        else if( state == State.REJECTED )
-        {
-            return apply( rej, error );
-        }
-        else
+        if( state == State.PENDING )
         {
             resolver = res;
             rejecter = rej;
-            next = new Promise( ( reslove, reject ) -> {
-            } );
+            if( next == null )
+            {
+                next = new Promise( ( reslove, reject ) -> {
+                } );
+            }
             return next;
+        }
+        else
+        {
+            Promise p = this;
+            if( state == State.RESOLVED && res != null )
+            {
+                p = apply( res, data );
+            }
+            else if( state == State.REJECTED && rej != null )
+            {
+                p = apply( rej, error );
+            }
+            if( next != null )
+            {
+                Promise n = next;
+                p.next = n.next;
+                if( n.resolver != null || n.rejecter != null )
+                {
+                    p.then( n.resolver, n.rejecter );
+                }
+                else if( n.closer != null || n.tomb != null )
+                {
+                    p.done( n.closer, n.tomb );
+                }
+            }
+            return p;
         }
     }
 
@@ -152,39 +173,7 @@ public class Promise
         }
         state = State.RESOLVED;
 
-        if( next == null )
-        {
-            if( resolver != null )
-            {
-                then( resolver );
-            }
-            else if( closer != null )
-            {
-                done( closer );
-            }
-        }
-        else if( next.state == State.PENDING )
-        {
-            Object obj = resolver == null ? data : apply( resolver, data );
-
-            if( obj instanceof Promise )
-            {
-                Promise p = ( Promise ) obj;
-                p.next = next.next;
-                if( next.resolver != null || next.rejecter != null )
-                {
-                    p.then( next.resolver, next.rejecter );
-                }
-                else if( next.closer != null || next.tomb != null )
-                {
-                    p.done( next.closer, next.tomb );
-                }
-            }
-            else
-            {
-                next.fulfill( obj );
-            }
-        }
+        execute();
     }
 
     private synchronized void decline( Object err )
@@ -196,38 +185,18 @@ public class Promise
         error = err;
         state = State.REJECTED;
 
-        if( next == null )
-        {
-            if( rejecter != null )
-            {
-                katch( rejecter );
-            }
-            else if( tomb != null )
-            {
-                bury( tomb );
-            }
-        }
-        else if( next.state == State.PENDING )
-        {
-            Object obj = rejecter == null ? error : apply( rejecter, error );
+        execute();
+    }
 
-            if( obj instanceof Promise )
-            {
-                Promise p = ( Promise ) obj;
-                p.next = next.next;
-                if( next.resolver != null || next.rejecter != null )
-                {
-                    p.then( next.resolver, next.rejecter );
-                }
-                else if( next.closer != null || next.tomb != null )
-                {
-                    p.done( next.closer, next.tomb );
-                }
-            }
-            else
-            {
-                next.decline( obj );
-            }
+    private void execute()
+    {
+        if( resolver != null || rejecter != null )
+        {
+            then( resolver, rejecter );
+        }
+        else if( closer != null || tomb != null )
+        {
+            done( closer, tomb );
         }
     }
 
@@ -309,21 +278,25 @@ public class Promise
 
     public static void main( String[] args )
     {
-        Promise.setTimeout( 3000 ).then( data -> {
-            System.out.println( data );
-            return Promise.setTimeout( 2000 );
-        } ).then( data -> {
-            System.out.println( data );
-            throw new NullPointerException( "Error" );
-        } ).katch( e -> e ).done( data -> System.out.println( data ) );
+//        Promise.setTimeout( 3000 ).then( data -> {
+//            System.out.println( data );
+//            return Promise.setTimeout( 2000 );
+//        } ).then( data -> {
+//            System.out.println( data );
+//            throw new NullPointerException( "Error" );
+//        } ).katch( e -> e ).done( data -> System.out.println( data ) );
 //        
 //        Promise.get( "http://localhost:6000/SiteEM.xml" ).then( data -> {
 //            System.out.println( data );
 //            return Promise.get( "http://localhost:6000/application_banner.txt" );
 //        } ).done( data -> System.out.println( data ), e -> System.out.println( e ) );
 //
-//        Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
-//            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done( data -> System.out.println( data ) );
+//        for( int i = 0; i < 5; i++ )
+//        {
+//            Promise.race( Promise.get( "http://localhost:6000/application_banner.txt" ),
+//                Promise.get( "http://localhost:6000/SiteEM.xml" ) ).katch( e -> e ).done(
+//                data -> System.out.println( data ) );
+//        }
 //
 //        Promise.all( Promise.get( "http://localhost:6000/application_banner.txt" ),
 //            Promise.get( "http://localhost:6000/SiteEM.xml" ) ).done( data -> System.out.println( data ),

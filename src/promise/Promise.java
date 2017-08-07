@@ -47,30 +47,32 @@ public class Promise
         this( 1, execution );
     }
 
-    public synchronized Promise then( Function<Object, Object> resolver )
+    public synchronized Promise then( Function<Object, Object> resolver, Function<Object, Object> rejecter )
     {
         if( state == State.RESOLVED )
         {
             return apply( resolver, data );
         }
-        else if( state == State.PENDING )
-        {
-            handlers.add( new FunctionWapper( resolver, false ) );
-        }
-        return this;
-    }
-
-    public synchronized Promise katch( Function<Object, Object> rejecter )
-    {
-        if( state == State.REJECTED )
+        else if( state == State.REJECTED )
         {
             return apply( rejecter, error );
         }
         else if( state == State.PENDING )
         {
+            handlers.add( new FunctionWapper( resolver, false ) );
             handlers.add( new FunctionWapper( rejecter, true ) );
         }
         return this;
+    }
+
+    public Promise then( Function<Object, Object> resolver )
+    {
+        return then( resolver, null );
+    }
+
+    public Promise katch( Function<Object, Object> rejecter )
+    {
+        return then( null, rejecter );
     }
 
     private Promise apply( Function<Object, Object> func, Object param )
@@ -130,9 +132,14 @@ public class Promise
         }
     }
 
-    public synchronized void done( Consumer<Object> c )
+    public void done( Consumer<Object> c )
     {
         done( c, null );
+    }
+
+    public void bury( Consumer<Object> t )
+    {
+        done( null, t );
     }
 
     private synchronized void fulfill( Object result )
