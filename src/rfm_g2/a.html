@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>RFM</title>
+    <!-- 引入 G2 文件 -->
+    <script src="g2.js"></script>
+    <script src="data_rfscan.js"></script>
+    <script src="data_dens.js"></script>
+    <script src="data_dtp.js"></script>
+    <script src="data_sim.js"></script>
+  </head>
+  <body>
+    <!-- 创建图表容器 -->
+    <div id="rfscan_spectrum"></div>
+    </br>
+    <div id="rfscan_spectogram"></div>
+    </br>
+    <div id="dens_power"></div>
+    </br>
+    <div id="dens_energy"></div>
+    </br>
+    <div id="dtp"></div>
+    </br>
+    <div id="sim_spectrum"></div>
+    </br>
+    <div id="sim_schematic"></div>
+    <script>
+	  G2.track(false);
+	  let Frame = G2.Frame;
+      let frame = new Frame(rfscan.spectrum);
+	  frame = Frame.combinColumns(frame, ['power', 'minHold', 'maxHold'], 'value', 'type', 'frequency')
+	  
+      let chart = new G2.Chart({
+        id : 'rfscan_spectrum', 
+        forceFit : true, 
+        height : 400,
+        plotCfg: {
+          margin: [20, 20, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        frequency : {
+		  alias : 'Frequency (MHz)'
+        },
+        value: {
+          alias : 'Power (dBm)',
+		  min : -200,
+		  max : 0
+        }
+      });
+	  chart.legend({
+		mode : 'multiple',
+		position : "bottom"
+	  });
+      chart.line().position('frequency*value').color('type');
+	  for( let r of rfscan.highlights){
+		chart.guide().rect([r[0],-200],[r[1],0]);
+	  }
+      chart.render();
+	  
+      frame = new Frame(rfscan.spectogram);
+      chart = new G2.Chart({
+        id : 'rfscan_spectogram', 
+        width : 1200, 
+        height : 600,
+        plotCfg: {
+          margin: [20, 135, 100, 80]
+        }
+      });
+	  chart.axis('x',{
+	    formatter: function(x){
+		  return Math.round(x*10)/10;
+		}
+	  });
+	  chart.axis('y',{
+	    formatter: function(x){
+		  return Math.round(x*100)/100;
+		}
+	  });
+      chart.source(frame, {
+        x : {
+		  type: 'cat',
+		  alias : 'Frequency (MHz)',
+		  tickCount: 11
+        },
+        y: {
+		  type: 'cat',
+          alias : 'Time (ms)',
+		  tickCount: 4,
+		  min:0
+        },
+        z: {
+          alias : 'Power (dBm)'
+        }
+      });
+	  chart.legend({
+		mode : 'false',
+		position : "right"
+	  });
+      chart.polygon().position('x*y').color('z', '#4A0000-#FF0000-#FF4A00-#FFFF00-#CDFF00-#00FF00-#00FFCD-#00FFFF-#00CDFF-#007DFF-#0000FF-#00007D-#00004B');
+	  for( let r of rfscan.highlights2){
+		chart.guide().rect([r[0],'min'],[r[1],'max']);
+	  }
+	  chart.tooltip(false);
+      chart.render();
+	  
+	  frame = new Frame(dens.data);
+      chart = new G2.Chart({
+        id : 'dens_power', 
+        forceFit : true, 
+        height : 600,
+        plotCfg: {
+          margin: [20, 135, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        frequency : {
+		  alias : 'Frequency (MHz)',
+		  tickCount: 11
+        },
+        power: {
+          alias : 'Power (dB)',
+		  tickCount: 11
+        },
+		pt :{
+		  type: 'cat'
+		}
+      });
+	  chart.legend('pt',{
+		mode : "multiple",
+		position : "bottom"
+	  });
+	  chart.legend('frequency',false);
+      chart.intervalStack().position('frequency*power').color('pt').size(65);
+      chart.render();
+	    chart.on('tooltipchange',function(ev){
+    var item = ev.items[0]; // 获取tooltip要显示的内容
+    item.value =Number(item.value)+ Number(ev.items[1].value);
+  });
+	  
+	  
+      frame = new Frame(dens.energy.data);	  
+      chart = new G2.Chart({
+        id : 'dens_energy', 
+        forceFit : true, 
+        height : 400,
+        plotCfg: {
+          margin: [20, 20, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        x : {
+		  alias : 'Energy',
+		  min : 0,
+		  max : 1
+        },
+        y: {
+          alias : 'PIM',
+		  min : 0
+        }
+      });
+      chart.line().position('x*y').color('lightblue');
+	  chart.guide().text([0.5, 'max'], 'PIM energy detection max');
+      chart.render();
+	  
+      frame = new Frame(dtp.data);	  
+      chart = new G2.Chart({
+        id : 'dtp', 
+        forceFit : true, 
+        height : 400,
+        plotCfg: {
+          margin: [20, 20, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        x : {
+		  alias : 'Absolute distance to RF (m)'
+        },
+        y: {
+          alias : 'PIM Power (nomalizaed to 1)',
+		  min : 0,
+		  max : 1
+        }
+      });
+      chart.line().position('x*y').color('lightblue');
+      chart.render();
+	  	  
+      frame = new Frame(sim.schematic);
+      chart = new G2.Chart({
+        id : 'sim_schematic', 
+        forceFit : true, 
+        height : 400,
+        plotCfg: {
+          margin: [50, 20, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        frequency : {
+		  alias : 'Frequency (MHz)'
+        },
+		power:{
+		  min:0
+		}
+      });
+	  chart.axis('power',{
+		  title: null,
+		  line: null,
+		  labels:null
+	  });
+	  chart.legend({
+		mode : 'multiple',
+		position : "top"
+	  });
+	 chart.area().position('frequency*power').color('t');
+	  for( let r of sim.highlights){
+		chart.guide().rect([r[0],'min'],[r[1],'max']);
+	  }
+      chart.render();
+	  
+      frame = new Frame(sim.spectrum);
+	  frame = Frame.combinColumns(frame, ['RX', 'IM3', 'IM5', 'IM7', 'IM9'], 'value', 'type', 'frequency')
+      chart = new G2.Chart({
+        id : 'sim_spectrum', 
+        forceFit : true, 
+        height : 400,
+        plotCfg: {
+          margin: [50, 20, 100, 80]
+        }
+      });
+      chart.source(frame, {
+        frequency : {
+		  alias : 'Frequency (MHz)'
+        }
+      });
+	  chart.axis('value',{
+		  title: null,
+		  line: null,
+		  labels:null
+	  });
+	  chart.legend({
+		mode : 'multiple',
+		position : "top"
+	  });
+      chart.line().position('frequency*value').color('type');
+	  for( let r of sim.highlights){
+		chart.guide().rect([r[0],'min'],[r[1],'max']);
+	  }
+      chart.render();
+    </script>
+  </body>
+</html>
