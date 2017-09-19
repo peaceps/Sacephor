@@ -22,9 +22,9 @@
     </br>
     <div id="dtp"></div>
     </br>
-    <div id="sim_spectrum"></div>
-    </br>
     <div id="sim_schematic"></div>
+    </br>
+    <div id="sim_spectrum"></div>
     <script>
 	  G2.track(false);
 	  let Frame = G2.Frame;
@@ -218,7 +218,7 @@
 	  }
       chart.render();
 	  
-      frame = new Frame(sim.spectrum);
+      frame = new Frame(sim.spectrum_ori);
 	  frame = Frame.combinColumns(frame, ['RX', 'IM3', 'IM5', 'IM7', 'IM9'], 'value', 'type', 'frequency')
       chart = new G2.Chart({
         id : 'sim_spectrum', 
