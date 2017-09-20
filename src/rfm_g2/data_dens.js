@@ -4,6 +4,7 @@ let dens =
 	maxRx : 907.6,
 	maxPower : 96.50453358494231,
 	data : [{frequency:885.0, power: 4.40651582046519, pt: 'IM' }, {frequency:885.0, power: 64.13760004074447, pt: 'Cell' }, {frequency:907.6, power: 10.44869610538565, pt: 'IM' }, {frequency:907.6, power: 86.05583747955666, pt: 'Cell' }],
+	test: [[{frequency:885.0, power: 68.40651582046519, pt: 'IM3' },{frequency:907.6, power: 96.44869610538565, pt: 'IM5' }  ], [{frequency:885.0, power: 64.13760004074447, pt: 'Cell1' },{frequency:907.6, power: 86.05583747955666, pt: 'Cell2' }]],
 	energy:{
 			cellId :'ANT-1',
 			data: [{x:0.0, y:3.195575237780733E-8},

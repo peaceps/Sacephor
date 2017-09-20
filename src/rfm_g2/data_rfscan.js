@@ -1,9 +1,9 @@
 let rfscan = 
 {
-smallestX : 859.2750244140625,
-largestX : 936.0,
+smallestX : 880,
+largestX : 915,
 highlights : [[881, 884], [902.9, 906]],
-highlights2 : [[880.86646, 884.1535], [902.97943, 905.96765]],
+highlights2 : [[[9, 0],[15,205]]],
 spectrum : [
 {
   frequency : 884.325,
